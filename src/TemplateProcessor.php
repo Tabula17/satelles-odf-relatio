@@ -2,6 +2,7 @@
 
 namespace Tabula17\Satelles\Odf;
 
+use Tabula17\Satelles\Odf\Exception\StrictValueConstraintException;
 use Tabula17\Satelles\Xml\XmlPart;
 
 
@@ -57,6 +58,7 @@ class TemplateProcessor
      * @param array $data An associative array containing data to populate the template.
      * @param string|null $alias An optional alias to target a specific section of the template.
      * @return void
+     * @throws StrictValueConstraintException
      */
     public function processTemplate(XmlPart $xml, array $data, ?string $alias = null): void
     {
@@ -80,6 +82,7 @@ class TemplateProcessor
      * @param array $data An associative array of data sets to apply to the template.
      * @param string $alias The alias identifying the specific section or context for processing.
      * @return void
+     * @throws StrictValueConstraintException
      */
     private function processTemplatesInLoop(XmlPart $xml, array $data, string $alias): void
     {
@@ -151,6 +154,7 @@ class TemplateProcessor
      * @param mixed $node The loop node to process, which may include query and alias definitions.
      * @param array $data An associative array containing the data used for populating the loop.
      * @return void
+     * @throws StrictValueConstraintException
      */
     private function processLoopNode(mixed $node, array $data): void
     {
@@ -165,9 +169,7 @@ class TemplateProcessor
                 $node->setAttribute('text:description', "pax-tpl-loop-$loopMember"); //
                 $node->delete();
                 foreach ($loopNode as $loop) {
-                    $loop->addAttribute($this->templateConfig->prefix . 'loop', '1');
                     $this->processTemplate($loop, $data[$loopMember], $loopAlias);
-                    $loop->removeAttribute($this->templateConfig->prefix . 'loop');
                     $loop->delete();
                 }
             }
@@ -182,6 +184,7 @@ class TemplateProcessor
      * @param array $data An associative array of data to replace placeholders within the text nodes.
      * @param string|null $alias An optional alias to filter text nodes for processing.
      * @return void
+     * @throws StrictValueConstraintException
      */
     private function processTextNodes(XmlPart $xml, array $data, ?string $alias = null): void
     {
@@ -235,6 +238,7 @@ class TemplateProcessor
      * @param array &$images A reference to an array that will store the file paths of processed images.
      * @param array &$imageNames A reference to an array that will store the names of processed image files.
      * @return void
+     * @throws StrictValueConstraintException
      */
     public function processMediaNode(XmlPart $drawNode, string $variableSelector, string $imageSelector, array $values, array &$images, array &$imageNames): void
     {
@@ -267,6 +271,7 @@ class TemplateProcessor
      * @param string $expression The expression to be evaluated, which may include placeholders in the form ${variable}.
      * @param array $data An associative array containing data to replace placeholders in the expression.
      * @return bool The result of the evaluated expression as a boolean value.
+     * @throws StrictValueConstraintException
      */
     private function evaluateExpression(string $expression, array $data): bool
     {
