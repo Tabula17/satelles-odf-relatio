@@ -42,54 +42,12 @@ Instale satelles-odf-relatio mediante uno de los siguientes métodos:
 [Ver ejemplos](./Examples/README.md)
 
 
-##  Contribuciones
-
-- **💬 [Discusiones](https://github.com/Tabula17/satelles-odf-relatio/discussions)**: Comparte tus ideas, envía comentarios o haz preguntas
-- **🐛 [Reportar problemas](https://github.com/Tabula17/satelles-odf-relatio/issues)**: Envía los errores encontrados o registra solicitudes de funcionalidad para el proyecto `satelles-odf-relatio`.
-- **💡 [Envía solicitudes de incorporación de cambios](https://github.com/Tabula17/satelles-odf-relatio/blob/main/CONTRIBUTING.md)**: Revisa las solicitudes de incorporación de cambios abiertas y envía las tuyas.
-
-<details closed>
-<summary>Directrices de contribución</summary>
-
-1. **Bifurcar el repositorio**: Comienza bifurcando el repositorio del proyecto en tu cuenta de GitHub.
-2. **Clonar localmente**: Clona el repositorio bifurcado en tu máquina local usando un cliente Git.
-3. 
-   ```sh
-   git clone https://github.com/Tabula17/satelles-odf-relatio
-   ```
-3. **Crear una nueva rama**: trabaje siempre en una nueva rama, dándole un nombre descriptivo.
-   ```sh
-   git checkout -b new-feature-x
-   ```
-4. **Realiza tus cambios**: Desarrolla y prueba tus cambios localmente.
-5. **Confirma tus cambios**: Comprométete con un mensaje claro que describa tus actualizaciones.
-   ```sh
-   git commit -m 'Implemented new feature x.'
-   ```
-6. **Enviar a github**: envía los cambios a tu repositorio bifurcado.
-   ```sh
-   git push origin new-feature-x
-   ```
-7. **Enviar una solicitud de incorporación de cambios**: Crea una solicitud de incorporación de cambios (PR) contra el repositorio original del proyecto. Describe claramente los cambios y sus motivos.
-8. **Revisión**: Una vez revisada y aprobada tu PR, se fusionará con la rama principal. ¡Felicitaciones por tu contribución!
-</details>
-
-<details closed>
-<summary>Gráfico de colaboradores</summary>
-<br>
-<p align="left">
-   <a href="https://github.com{/Tabula17/satelles-odf-relatio/}graphs/contributors">
-      <img src="https://contrib.rocks/image?repo=Tabula17/satelles-odf-relatio">
-   </a>
-</p>
-</details>
-
 ---
 
 ##  Licencia
 
 Este proyecto está protegido por la licencia SELECT-A-LICENSE. Para más detalles, consulta el archivo LICENSE.
 
----
+
 
 
