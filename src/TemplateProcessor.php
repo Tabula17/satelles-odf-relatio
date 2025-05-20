@@ -11,7 +11,7 @@ use Tabula17\Satelles\Xml\XmlPart;
  * It enables handling of various template constructs such as dynamic loops,
  * conditional logic, and media rendering within XML documents.
  */
-class TemplateProcessor
+class TemplateProcessor implements TemplateProcessorInterface
 {
     private const string TEMPLATE_PREFIX = 'odf-tpl-';
     private const XPATH_REPLACEMENTS = [
@@ -28,10 +28,10 @@ class TemplateProcessor
      * Constructor method to initialize the object with required dependencies.
      *
      * @param DataRenderer $renderer Instance of the data renderer.
-     * @param OdfContainer $fileContainer Instance of the file container.
+     * @param OdfContainerInterface $fileContainer Instance of the file container.
      * @return void
      */
-    public function __construct(DataRenderer $renderer, OdfContainer $fileContainer)
+    public function __construct(DataRenderer $renderer, OdfContainerInterface $fileContainer)
     {
         $this->renderer = $renderer;
         $this->fileContainer = $fileContainer;

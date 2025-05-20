@@ -4,6 +4,7 @@ namespace Tabula17\Satelles\Odf;
 
 use Tabula17\Satelles\Odf\Exception\StrictValueConstraintException;
 use Tabula17\Satelles\Odf\Functions\Base;
+use Tabula17\Satelles\Odf\Renderer\DataRendererInterface;
 
 /**
  * Class DataRenderer
@@ -11,7 +12,7 @@ use Tabula17\Satelles\Odf\Functions\Base;
  * Handles the rendering and processing of structured data with support for arithmetic operations,
  * function application, and strict mode validation.
  */
-class DataRenderer
+class DataRenderer implements DataRendererInterface
 {
     private const string VALUE_PLACEHOLDER = '__VALUE__';
     private const string ARITHMETIC_PATTERN = '/(?<!")[+\-*\/](?!")/';

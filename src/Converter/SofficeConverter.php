@@ -68,9 +68,11 @@ class SofficeConverter implements ConverterInterface
             throw new NonWritableFileException($this->outputDir . ' is not a writable directory');
         }
         $generated_file = $this->outputDir . DIRECTORY_SEPARATOR . explode('.', basename($file))[0] . '.' . $this->format;
+        $escapedFile = (str_replace(' ', '\\ ', $file));
+        $escapedOutput = (str_replace(' ', '\\ ', $this->outputDir));
 
-        $command = "$this->sofficeBin --headless --convert-to pdf '$file' --outdir  '$this->outputDir'";
-        if ($this->overwrite || !file_exists($generated_file) ) {
+        $command = "$this->sofficeBin --headless --convert-to pdf $escapedFile --outdir  $escapedOutput";
+        if ($this->overwrite || !file_exists($generated_file)) {
             exec($command);
         }
         if ($outputName && rename($generated_file, $this->outputDir . DIRECTORY_SEPARATOR . $outputName)) {

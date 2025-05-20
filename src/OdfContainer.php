@@ -14,20 +14,9 @@ use ZipArchive;
  * Handles ODT file operations including loading, modifying, and saving XML components,
  * as well as adding images and managing the manifest.
  */
-class OdfContainer
+class OdfContainer implements OdfContainerInterface
 {
-    public const array XML_MEMBERS = [
-        'manifest',
-        'styles',
-        'settings',
-        'content'
-    ];
-    private const array XML_PATHS = [
-        'content' => 'content.xml',
-        'styles' => 'styles.xml',
-        'manifest' => 'META-INF/manifest.xml',
-        'settings' => 'settings.xml'
-    ];
+
     private const string PICTURES_PATH = 'Pictures/';
 
     /**
@@ -49,6 +38,9 @@ class OdfContainer
 
     private ZipArchive $zip;
     private string $file;
+    private bool $zipOpened = false;
+    private bool $coroutine;
+
 
     /**
      * @param ZipArchive $zipHandler
@@ -58,19 +50,19 @@ class OdfContainer
         $this->zip = $zipHandler;
     }
 
+    public function __destruct()
+    {
+        if ($this->zipOpened) {
+            // var_export($this->zip);
+            $this->zip->close();
+        }
+    }
+
     public function getPicturesFolder(): string
     {
         return self::PICTURES_PATH;
     }
 
-    /**
-     * @param $member
-     * @return string|null
-     */
-    public static function getPath($member): ?string
-    {
-        return self::XML_PATHS[$member] ?? null;
-    }
 
     /**
      * @return XmlPart
@@ -108,16 +100,19 @@ class OdfContainer
         if ($this->zip->open($file) !== true) {
             throw new RuntimeException("Error while Opening the file '$file' - Check your odf file");
         }
-        $odfMembers = self::XML_MEMBERS;
-        foreach ($odfMembers as $memberName) {
-            $path = self::getPath($memberName);
+        foreach (XmlMemberPath::cases() as $member) {
+            if ($member->name() === 'pictures') {
+                continue;
+            }
+        //foreach (XmlMember::cases() as $memberName) {
+            $path =$member->value;
             if (($xml = $this->zip->getFromName($path)) === false) {
                 throw new RuntimeException("Nothing to parse - check that the $path file is correctly formed");
             }
-            $part = $memberName . 'Xml';
+            $part = $member->name() . 'Xml';
             $this->$part = new XmlPart($xml);
         }
-        $this->zip->close();
+        //$this->zip->close();
         $this->file = $file;
     }    /**
  * @param string $fileName
@@ -132,6 +127,18 @@ class OdfContainer
     }
 
 
+    private function addStreamImage(string $imgPath, ?string $name = null): void
+    {
+        $this->ensureZipOpened();
+        $stream = fopen($imgPath, 'rb');
+        $fileName = $name ?? basename($imgPath);
+        $this->zip->addFromString(
+            self::PICTURES_PATH . $fileName,
+            stream_get_contents($stream)
+        );
+        fclose($stream);
+    }
+
     /**
      * Adds an image file to the ODT file by including it in the 'Pictures' directory inside the archive.
      *
@@ -143,12 +150,7 @@ class OdfContainer
      */
     public function addImage(string $imgPath, ?string $name = null): void
     {
-        if ($this->zip->open($this->file) !== true) {
-            throw new RuntimeException("Error while Opening the file '$this->file' - Check your odf file");
-        }
-        $fileName = $name ?? basename($imgPath);
-        $this->zip->addFile($imgPath, self::PICTURES_PATH . $fileName);
-        $this->zip->close();
+        $this->addStreamImage($imgPath, $name);
     }
 
     /**
@@ -162,28 +164,52 @@ class OdfContainer
      */
     public function addImages(array $imgPaths, ?array $name = null): void
     {
-        if ($this->zip->open($this->file) !== true) {
-            throw new RuntimeException("Error while Opening the file '$this->file' - Check your odf file");
-        }
+
         foreach ($imgPaths as $key => $imgPath) {
-            $this->zip->addFile($imgPath, self::PICTURES_PATH . ($name[$key] ?? basename($imgPath)));
+            $fileName = $name[$key] ?? basename($imgPath);
+            $this->addStreamImage($imgPath, $fileName);
         }
-        $this->zip->close();
+
 
     }
-    public function saveFile(): void{
-        if (!$this->file||$this->zip->open($this->file) !== true) {
-            throw new RuntimeException("Error while Opening the file '$this->file' - Check your odf file");
-        }
-        $odfMembers = self::XML_MEMBERS;
-        foreach ($odfMembers as $memberName) {
-            $path = self::getPath($memberName);
-            $part = $memberName . 'Xml';
-         //   echo $path, PHP_EOL, $memberName, PHP_EOL, $part, PHP_EOL;
 
-
-            $this->zip->addFromString($path, $this->$part->asXml());
+    public function saveFile(): void
+    {
+        if (empty($this->file)) {
+            throw new RuntimeException("No hay archivo cargado");
         }
-        $this->zip->close();
+        $this->ensureZipOpened();
+        try {
+            //$odfMembers = array_column(XmlMember::cases(), 'values');//self::XML_MEMBERS;
+            foreach (XmlMemberPath::cases() as $member) {
+                if ($member->name() === 'pictures') {
+                    continue;
+                }
+                $part = $member->name() . 'Xml';
+                $this->zip->addFromString(
+                    $member->value,
+                    //self::XML_PATHS[$member->value],
+                    $this->$part->asXml()
+                );
+            }
+        } finally {
+            $this->zip->close();
+            $this->zipOpened = false;
+        }
+    }
+
+    private function ensureZipOpened(): void
+    {
+        if (!$this->zipOpened) {
+            if ($this->zip->open($this->file) !== true) {
+                throw new RuntimeException("Error while Opening the file '$this->file' - Check your odf file");
+            }
+            $this->zipOpened = true;
+        }
+    }
+
+    private function sanitizeFilename(string $name): string
+    {
+        return preg_replace('/[^a-zA-Z0-9\-_.]/', '', $name);
     }
 }
