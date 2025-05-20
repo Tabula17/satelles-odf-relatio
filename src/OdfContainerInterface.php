@@ -14,28 +14,10 @@ interface  OdfContainerInterface
 {
     public function getPicturesFolder(): string;
 
-    /**
-     * @return XmlPart
-     */
-    public function getManifestXml(): XmlPart;
-
-    /**
-     * @return XmlPart
-     */
-    public function getStylesXml(): XmlPart;
-
-    /**
-     * @return XmlPart
-     */
-    public function getSettingsXml(): XmlPart;
-
-    /**
-     * @return XmlPart
-     */
-    public function getContentXml(): XmlPart;
-
     public function loadFile(string $file): void;
 
+    public function loadPart(XmlMemberPath $part): void;
+    public function getPart(XmlMemberPath $part): ?XmlPart;
     /**
      * @param string $fileName
      * @param $mime

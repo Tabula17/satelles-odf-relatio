@@ -51,8 +51,8 @@ class OdfProcessor
 
     private function processXmlFiles(array $data, ?string $alias): void
     {
-        $this->xmlProcessor->processTemplate($this->fileContainer->getContentXml(), $data, $alias);
-        $this->xmlProcessor->processTemplate($this->fileContainer->getStylesXml(), $data, $alias);
+        $this->xmlProcessor->processTemplate($this->fileContainer->getPart(XmlMemberPath::CONTENT), $data, $alias);
+        $this->xmlProcessor->processTemplate($this->fileContainer->getPart(XmlMemberPath::STYLES), $data, $alias);
     }
 
     private function setWorkingDirectory(string $baseDir): void
@@ -97,6 +97,9 @@ class OdfProcessor
 
             $this->fileIsCompiled = false;
             $this->fileContainer->loadFile($odfFile);
+            /*$this->fileContainer->loadPart(XmlMemberPath::CONTENT);
+            $this->fileContainer->loadPart(XmlMemberPath::STYLES);
+            $this->fileContainer->loadPart(XmlMemberPath::MANIFEST);*/
             $this->fileIsLoaded = true;
 
             return $this;

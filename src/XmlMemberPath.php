@@ -20,4 +20,14 @@ enum XmlMemberPath: string
             self::PICTURES => 'pictures',
         };
     }
+    public static function fromName(string $name): string{
+        return match ($name) {
+            'content' => self::CONTENT->value,
+            'styles' => self::STYLES->value,
+            'settings' => self::SETTINGS->value,
+            'manifest' => self::MANIFEST->value,
+            'pictures' => self::PICTURES->value,
+            default => throw new \InvalidArgumentException("Invalid name: $name"),
+        };
+    }
 }

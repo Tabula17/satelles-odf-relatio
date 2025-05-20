@@ -40,6 +40,7 @@ class OdfContainer implements OdfContainerInterface
     private string $file;
     private bool $zipOpened = false;
     private bool $coroutine;
+    private $parts;
 
 
     /**
@@ -60,43 +61,12 @@ class OdfContainer implements OdfContainerInterface
 
     public function getPicturesFolder(): string
     {
-        return self::PICTURES_PATH;
+        return XmlMemberPath::PICTURES->value;
     }
 
-
-    /**
-     * @return XmlPart
-     */
-    public function getManifestXml(): XmlPart
+    public function loadFile(string $file): void
     {
-        return $this->manifestXml;
-    }
-    /**
-     * @return XmlPart
-     */
-    public function getStylesXml(): XmlPart
-    {
-        return $this->stylesXml;
-    }
-
-    /**
-     * @return XmlPart
-     */
-    public function getSettingsXml(): XmlPart
-    {
-        return $this->settingsXml;
-    }
-
-    /**
-     * @return XmlPart
-     */
-    public function getContentXml(): XmlPart
-    {
-        return $this->contentXml;
-    }
-
-     public function loadFile(string $file): void
-    {
+        /*
         if ($this->zip->open($file) !== true) {
             throw new RuntimeException("Error while Opening the file '$file' - Check your odf file");
         }
@@ -111,18 +81,49 @@ class OdfContainer implements OdfContainerInterface
             }
             $part = $member->name() . 'Xml';
             $this->$part = new XmlPart($xml);
-        }
+        }*/
         //$this->zip->close();
         $this->file = $file;
-    }    /**
- * @param string $fileName
- * @param $mime
- * @return void
- */
+        foreach (XmlMemberPath::cases() as $member) {
+            if ($member->name() === 'pictures' || $member->name() === 'settings') {
+                continue;
+            }
+            $this->loadPart($member);
+        }
+    }
+
+    public function loadPart(XmlMemberPath $part): void
+    {
+        if ($part->name() === 'pictures') {
+            return;
+        }
+        $this->ensureZipOpened();
+        $path = $part->value;
+        if (($xml = $this->zip->getFromName($path)) === false) {
+            throw new RuntimeException("Nothing to parse - check that the $path file is correctly formed");
+        }
+        // $partName = $part->name() . 'Xml';
+        // $this->$partName = new XmlPart($xml);
+        $this->parts[$part->name()] = new XmlPart($xml);
+    }
+
+    public function getPart(XmlMemberPath $part): ?XmlPart
+    {
+        if ($part->name() === 'pictures') {
+            return null;
+        }
+        return $this->parts[$part->name()];
+    }
+
+    /**
+     * @param string $fileName
+     * @param $mime
+     * @return void
+     */
     public function registerFileInManifest(string $fileName, $mime): void
     {
-        $this->manifestXml->addChild(
-            'manifest:file-entry manifest:full-path="' . self::PICTURES_PATH . $fileName . '" manifest:media-type="' . $mime . '"'
+        $this->getPart(XmlMemberPath::MANIFEST)->addChild(
+            'manifest:file-entry manifest:full-path="' . XmlMemberPath::PICTURES->value . $fileName . '" manifest:media-type="' . $mime . '"'
         );
     }
 
@@ -133,7 +134,7 @@ class OdfContainer implements OdfContainerInterface
         $stream = fopen($imgPath, 'rb');
         $fileName = $name ?? basename($imgPath);
         $this->zip->addFromString(
-            self::PICTURES_PATH . $fileName,
+            XmlMemberPath::PICTURES->value . $fileName,
             stream_get_contents($stream)
         );
         fclose($stream);
@@ -180,16 +181,10 @@ class OdfContainer implements OdfContainerInterface
         }
         $this->ensureZipOpened();
         try {
-            //$odfMembers = array_column(XmlMember::cases(), 'values');//self::XML_MEMBERS;
-            foreach (XmlMemberPath::cases() as $member) {
-                if ($member->name() === 'pictures') {
-                    continue;
-                }
-                $part = $member->name() . 'Xml';
+            foreach ($this->parts as $name => $part) {
                 $this->zip->addFromString(
-                    $member->value,
-                    //self::XML_PATHS[$member->value],
-                    $this->$part->asXml()
+                    XmlMemberPath::fromName($name),
+                    $part->asXml()
                 );
             }
         } finally {
