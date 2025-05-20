@@ -12,11 +12,31 @@ use Tabula17\Satelles\Xml\XmlPart;
  */
 interface  OdfContainerInterface
 {
+    /**
+     * @return string
+     */
     public function getPicturesFolder(): string;
 
-    public function loadFile(string $file): void;
+    /**
+     * @param string $file
+     */
+    public function loadFile(string $file);
 
-    public function loadPart(XmlMemberPath $part): void;
+    /**
+     * @param XmlMemberPath $part
+     */
+    public function loadPart(XmlMemberPath $part);
+
+    /**
+     * @param XmlMemberPath $part
+     * @return XmlPart|null
+     * @throws RuntimeException
+     *
+     * This method retrieves a specific XML part from the ODF container.
+     * It uses the XmlMemberPath to identify which part to load and returns the corresponding XmlPart object.
+     *
+     * If the specified part is not found, it returns null.
+     */
     public function getPart(XmlMemberPath $part): ?XmlPart;
     /**
      * @param string $fileName
