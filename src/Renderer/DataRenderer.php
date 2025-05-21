@@ -161,7 +161,6 @@ class DataRenderer implements DataRendererInterface
         preg_match_all($this->arithmeticRegEx, $scriptParts[0], $arithmetic);
         $expression = implode('', (array)$this->interleaveArrays($varMembers, $arithmetic[0]));
         $result = $this->safeMathEval->evaluate($expression);
-        //$result = eval('return ' . $expression . ';');
 
         $this->validateResult($result, $expression);
 

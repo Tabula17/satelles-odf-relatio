@@ -12,7 +12,7 @@ use Tabula17\Satelles\Xml\XmlPart;
 
 
 /**
- * The XmlProcessor class provides functionality for processing XML templates.
+ * The TemplateProcessor class provides functionality for processing XML templates.
  * It enables handling of various template constructs such as dynamic loops,
  * conditional logic, and media rendering within XML documents.
  */

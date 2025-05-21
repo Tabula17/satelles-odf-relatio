@@ -1,7 +1,24 @@
 <?php
 
 namespace Tabula17\Satelles\Odf;
-
+/**
+ * An enumeration representing XML member paths used in a specific context.
+ * Each case corresponds to a file path related to a defined XML component.
+ *
+ * The enumeration provides methods to map these cases to associated names and retrieve values
+ * based on a given name.
+ *
+ * Cases:
+ * - CONTENT: Represents the 'content.xml' path.
+ * - STYLES: Represents the 'styles.xml' path.
+ * - SETTINGS: Represents the 'settings.xml' path.
+ * - MANIFEST: Represents the 'META-INF/manifest.xml' path.
+ * - PICTURES: Represents the 'Pictures/' directory path.
+ *
+ * Methods:
+ * - name: Maps the enumeration case to its corresponding simple name string.
+ * - fromName: Retrieves the file path value from a given name. Throws an exception for invalid names.
+ */
 enum XmlMemberPath: string
 {
     case CONTENT = 'content.xml';

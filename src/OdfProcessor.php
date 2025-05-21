@@ -9,6 +9,13 @@ use Tabula17\Satelles\Odf\File\OdfContainer;
 use Tabula17\Satelles\Odf\Renderer\DataRenderer;
 use Tabula17\Satelles\Odf\Template\TemplateProcessor;
 
+/**
+ * Class OdfProcessor
+ *
+ * Processes and manipulates ODF (Open Document Format) files with functionality
+ * for rendering templates, compiling, exporting, and managing working directories.
+ * Handles various aspects of ODF file processing using provided data and exporters.
+ */
 class OdfProcessor
 {
     private const string TEMP_PREFIX = 'j17';
