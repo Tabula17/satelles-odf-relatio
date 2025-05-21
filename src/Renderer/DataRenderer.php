@@ -23,6 +23,7 @@ class DataRenderer implements DataRendererInterface
     private bool $strictMode;
     public ?array $allData;
 
+
     /**
      * @param array|null $data
      * @param FunctionsInterface|null $functions
@@ -39,6 +40,20 @@ class DataRenderer implements DataRendererInterface
         $this->strictMode = $strictMode;
     }
 
+    public function setFunctions(FunctionsInterface $functions): void
+    {
+        $this->functions = $functions;
+    }
+
+    public function setStrictMode(bool $strictMode): void
+    {
+        $this->strictMode = $strictMode;
+    }
+
+    public function setAllData(?array $allData): void
+    {
+        $this->allData = $allData;
+    }
     /**
      * Merges multiple arrays by interleaving their elements sequentially.
      * Each element from the input arrays is placed in a round-robin order

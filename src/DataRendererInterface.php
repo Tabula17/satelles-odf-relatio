@@ -13,6 +13,12 @@ use Tabula17\Satelles\Odf\Exception\StrictValueConstraintException;
  */
 interface DataRendererInterface
 {
+    public function setFunctions(FunctionsInterface $functions): void;
+
+    public function setStrictMode(bool $strictMode): void;
+
+    public function setAllData(?array $allData): void;
+
     /**
      * Processes a variable by extracting its components, optionally evaluating
      * arithmetic expressions, applying a function, and validating the result.
