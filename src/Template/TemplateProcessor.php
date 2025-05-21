@@ -2,6 +2,7 @@
 
 namespace Tabula17\Satelles\Odf\Template;
 
+use Tabula17\Satelles\Odf\DataRendererInterface;
 use Tabula17\Satelles\Odf\Exception\StrictValueConstraintException;
 use Tabula17\Satelles\Odf\File\OdfContainer;
 use Tabula17\Satelles\Odf\OdfContainerInterface;
@@ -24,8 +25,8 @@ class TemplateProcessor implements TemplateProcessorInterface
         '/left@/' => 'parent::*/preceding-sibling::',
         '/right@/' => 'parent::*/following-sibling::'
     ];
-    private DataRenderer $renderer;
-    private OdfContainer $fileContainer;
+    private DataRendererInterface $renderer;
+    private OdfContainerInterface $fileContainer;
 
     /**
      * Constructor method to initialize the object with required dependencies.
@@ -34,7 +35,7 @@ class TemplateProcessor implements TemplateProcessorInterface
      * @param OdfContainerInterface $fileContainer Instance of the file container.
      * @return void
      */
-    public function __construct(DataRenderer $renderer, OdfContainerInterface $fileContainer)
+    public function __construct(DataRendererInterface $renderer, OdfContainerInterface $fileContainer)
     {
         $this->renderer = $renderer;
         $this->fileContainer = $fileContainer;
