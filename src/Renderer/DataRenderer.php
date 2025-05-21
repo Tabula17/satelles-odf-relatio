@@ -18,10 +18,25 @@ class DataRenderer implements DataRendererInterface
     private const string VALUE_PLACEHOLDER = '__VALUE__';
     private const string ARITHMETIC_PATTERN = '/(?<!")[+\-*\/](?!")/';
 
-    private FunctionsInterface $functions;
+    public FunctionsInterface $functions {
+        set {
+            $this->functions = $value;
+        }
+        get {
+            return $this->functions;
+        }
+    }
     private string $arithmeticRegEx = self::ARITHMETIC_PATTERN;
-    private bool $strictMode;
-    public ?array $allData;
+    public bool $strictMode {
+        set {
+            $this->strictMode = $value;
+        }
+    }
+    public ?array $allData {
+        set {
+            $this->allData = $value;
+        }
+    }
 
 
     /**
@@ -40,20 +55,6 @@ class DataRenderer implements DataRendererInterface
         $this->strictMode = $strictMode;
     }
 
-    public function setFunctions(FunctionsInterface $functions): void
-    {
-        $this->functions = $functions;
-    }
-
-    public function setStrictMode(bool $strictMode): void
-    {
-        $this->strictMode = $strictMode;
-    }
-
-    public function setAllData(?array $allData): void
-    {
-        $this->allData = $allData;
-    }
     /**
      * Merges multiple arrays by interleaving their elements sequentially.
      * Each element from the input arrays is placed in a round-robin order

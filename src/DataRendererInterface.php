@@ -13,11 +13,18 @@ use Tabula17\Satelles\Odf\Exception\StrictValueConstraintException;
  */
 interface DataRendererInterface
 {
-    public function setFunctions(FunctionsInterface $functions): void;
+    public FunctionsInterface $functions {
+        set;
+        get;
+    }
 
-    public function setStrictMode(bool $strictMode): void;
+    public bool $strictMode {
+        set;
+    }
 
-    public function setAllData(?array $allData): void;
+    public array|null $allData {
+        set;
+    }
 
     /**
      * Processes a variable by extracting its components, optionally evaluating
@@ -31,7 +38,6 @@ interface DataRendererInterface
      * @return mixed Returns the processed value after evaluating the tag and applying
      *               any associated function. Defaults to an empty string if no value
      *               is resolved.
-     * @throws StrictValueConstraintException
      * @throws StrictValueConstraintException
      */
     public function processVariable(string $tag, array $data): mixed;
