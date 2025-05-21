@@ -66,6 +66,7 @@ class TemplateProcessor implements TemplateProcessorInterface
     public function processTemplate(XmlPart $xml, array $data, ?string $alias = null): void
     {
         if ($alias === null) {
+            $this->renderer->setAllData($data);
             $this->processIfTemplates($xml, $data);
             $this->processLoopTemplates($xml, $data);
             $this->processTextNodes($xml, $data);
