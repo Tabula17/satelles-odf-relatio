@@ -4,6 +4,7 @@ namespace Tabula17\Satelles\Odf;
 
 
 use Tabula17\Satelles\Odf\Exception\StrictValueConstraintException;
+use Tabula17\Satelles\Odf\Template\TemplateConfig;
 use Tabula17\Satelles\Xml\XmlPart;
 
 /**
@@ -16,10 +17,10 @@ interface TemplateProcessorInterface
     /**
      * Retrieves the template name based on the given type.
      *
-     * @param string $type The type identifier used to fetch the corresponding template TAG.
+     * @param TemplateConfig $type The type identifier used to fetch the corresponding template TAG.
      * @return string Returns the name of the template TAG.
      */
-    public function getTemplateName(string $type): string;
+    public function getTemplateName(TemplateConfig $type): string;
 
     /**
      * Processes the given XML template by replacing placeholders with provided data.

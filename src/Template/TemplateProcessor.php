@@ -18,14 +18,13 @@ use Tabula17\Satelles\Xml\XmlPart;
 class TemplateProcessor implements TemplateProcessorInterface
 {
     private const string TEMPLATE_PREFIX = 'odf-tpl-';
-    private const XPATH_REPLACEMENTS = [
+    private const array XPATH_REPLACEMENTS = [
         '/up@/' => 'ancestor-or-self::',
         '/down@/' => 'descendant-or-self::',
         '/left@/' => 'parent::*/preceding-sibling::',
         '/right@/' => 'parent::*/following-sibling::'
     ];
     private DataRenderer $renderer;
-    private TemplateConfig $templateConfig;
     private OdfContainer $fileContainer;
 
     /**
@@ -39,18 +38,17 @@ class TemplateProcessor implements TemplateProcessorInterface
     {
         $this->renderer = $renderer;
         $this->fileContainer = $fileContainer;
-        $this->templateConfig = new TemplateConfig(self::TEMPLATE_PREFIX);
     }
 
     /**
      * Retrieves the template name based on the given type.
      *
-     * @param string $type The type identifier used to fetch the corresponding template.
+     * @param TemplateConfig $type The type identifier used to fetch the corresponding template.
      * @return string Returns the name of the template.
      */
-    public function getTemplateName(string $type): string
+    public function getTemplateName(TemplateConfig $type): string
     {
-        return $this->templateConfig->getTemplateName($type);
+        return $type->label(self::TEMPLATE_PREFIX);
     }
 
     /**
@@ -70,8 +68,8 @@ class TemplateProcessor implements TemplateProcessorInterface
             $this->processIfTemplates($xml, $data);
             $this->processLoopTemplates($xml, $data);
             $this->processTextNodes($xml, $data);
-            $this->processMedia($xml, $data, $this->getTemplateName('image'));
-            $this->processMedia($xml, $data, $this->getTemplateName('svg'));
+            $this->processMedia($xml, $data, $this->getTemplateName(TemplateConfig::IMAGE));
+            $this->processMedia($xml, $data, $this->getTemplateName(TemplateConfig::SVG));;
         } else {
             $this->processTemplatesInLoop($xml, $data, $alias);
         }
@@ -95,8 +93,8 @@ class TemplateProcessor implements TemplateProcessorInterface
             $this->processIfTemplates($loopNode, $values);
             $this->processLoopTemplates($loopNode, $values, $alias);
             $this->processTextNodes($loopNode, $values, $alias);
-            $this->processMedia($loopNode, $values, $this->getTemplateName('imageLoop'));
-            $this->processMedia($loopNode, $values, $this->getTemplateName('svgLoop'));
+            $this->processMedia($loopNode, $values, $this->getTemplateName(TemplateConfig::IMAGE_LOOP));
+            $this->processMedia($loopNode, $values, $this->getTemplateName(TemplateConfig::SVG_LOOP));
         }
     }
 
@@ -110,7 +108,7 @@ class TemplateProcessor implements TemplateProcessorInterface
      */
     private function processIfTemplates(XmlPart $xml, array $data): void
     {
-        $ifTplSearch = ".//text:text-input[@text:description=\"{$this->getTemplateName('if')}\"][not(ancestor::text:text-input[@text:description=\"{$this->getTemplateName('loop')}\"])]";
+        $ifTplSearch = ".//text:text-input[@text:description=\"{$this->getTemplateName(TemplateConfig::IF)}\"][not(ancestor::text:text-input[@text:description=\"{$this->getTemplateName(TemplateConfig::LOOP)}\"])]";
         $ifNodes = $xml->xpath($ifTplSearch);
         /**
          * @var XmlPart $node
@@ -143,7 +141,7 @@ class TemplateProcessor implements TemplateProcessorInterface
      */
     private function processLoopTemplates(XmlPart $xml, array $data, ?string $alias = null): void
     {
-        $loopTplSearch = "descendant::text:text-input[@text:description=\"{$this->getTemplateName('loop')}\"]";
+        $loopTplSearch = "descendant::text:text-input[@text:description=\"{$this->getTemplateName(TemplateConfig::LOOP)}\"]";
         $loopNodes = $xml->xpath($loopTplSearch);
         foreach ($loopNodes as $node) {
             $this->processLoopNode($node, $data);
@@ -192,7 +190,7 @@ class TemplateProcessor implements TemplateProcessorInterface
      */
     private function processTextNodes(XmlPart $xml, array $data, ?string $alias = null): void
     {
-        $textNodes = $xml->xpath("descendant::text:text-input[@text:description=\"{$this->getTemplateName('text')}\"]");
+        $textNodes = $xml->xpath("descendant::text:text-input[@text:description=\"{$this->getTemplateName(TemplateConfig::TEXT)}\"]");
         foreach ($textNodes as $textNode) {
             if (preg_match('/\${(.*)}/', $textNode) === 1) {
                 if ($alias !== null && !str_contains($textNode, $alias . '.')) {
