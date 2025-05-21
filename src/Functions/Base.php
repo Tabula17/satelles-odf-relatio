@@ -19,4 +19,13 @@ class Base implements FunctionsInterface
     public function __call(string $func, array $args) {
         return call_user_func_array($func, $args);
     }
+
+    public null|string $workingDir {
+        get {
+            return $this->workingDir;
+        }
+        set {
+            $this->workingDir = $value;
+        }
+    }
 }

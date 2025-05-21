@@ -103,7 +103,7 @@ class Advanced extends Base
         'png' => PngWriter::class,
         'svg' => SvgWriter::class
     ];
-    public string $workingDir {
+    public ?string $workingDir {
         /**
          * @return string
          */
