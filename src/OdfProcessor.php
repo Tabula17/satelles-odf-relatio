@@ -5,6 +5,9 @@ use Exception;
 use Tabula17\Satelles\Odf\Exception\CompilationException;
 use Tabula17\Satelles\Odf\Exception\NonWritableFileException;
 use Tabula17\Satelles\Odf\Exception\RuntimeException;
+use Tabula17\Satelles\Odf\File\OdfContainer;
+use Tabula17\Satelles\Odf\Renderer\DataRenderer;
+use Tabula17\Satelles\Odf\Template\TemplateProcessor;
 
 class OdfProcessor
 {

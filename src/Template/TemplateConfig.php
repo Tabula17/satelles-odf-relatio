@@ -1,6 +1,6 @@
 <?php
 
-namespace Tabula17\Satelles\Odf;
+namespace Tabula17\Satelles\Odf\Template;
 use InvalidArgumentException;
 
 /**

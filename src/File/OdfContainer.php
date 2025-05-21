@@ -4,9 +4,11 @@
  * Represents an ODT file with its corresponding XML parts.
  */
 
-namespace Tabula17\Satelles\Odf;
+namespace Tabula17\Satelles\Odf\File;
 
 use Tabula17\Satelles\Odf\Exception\RuntimeException;
+use Tabula17\Satelles\Odf\OdfContainerInterface;
+use Tabula17\Satelles\Odf\XmlMemberPath;
 use Tabula17\Satelles\Xml\XmlPart;
 use ZipArchive;
 
@@ -122,9 +124,11 @@ class OdfContainer implements OdfContainerInterface
      */
     public function registerFileInManifest(string $fileName, $mime): void
     {
-        $this->getPart(XmlMemberPath::MANIFEST)->addChild(
-            'manifest:file-entry manifest:full-path="' . XmlMemberPath::PICTURES->value . $fileName . '" manifest:media-type="' . $mime . '"'
-        );
+        if ($this->getPart(XmlMemberPath::MANIFEST) !== null) {
+            $this->getPart(XmlMemberPath::MANIFEST)->addChild(
+                'manifest:file-entry manifest:full-path="' . XmlMemberPath::PICTURES->value . $fileName . '" manifest:media-type="' . $mime . '"'
+            );
+        }
     }
 
 

@@ -3,11 +3,11 @@ require __DIR__ . str_replace('/', DIRECTORY_SEPARATOR, '/../vendor/autoload.php
 include __DIR__ . str_replace('/', DIRECTORY_SEPARATOR, '/Media/Data.php');
 
 use Tabula17\Satelles\Odf\Converter\SofficeConverter;
-use Tabula17\Satelles\Odf\DataRenderer;
 use Tabula17\Satelles\Odf\Exporter\ExportToFile;
-use Tabula17\Satelles\Odf\OdfContainer;
+use Tabula17\Satelles\Odf\File\OdfContainer;
 use Tabula17\Satelles\Odf\Functions\Advanced;
 use Tabula17\Satelles\Odf\OdfProcessor;
+use Tabula17\Satelles\Odf\Renderer\DataRenderer;
 
 const SOFFICE_BIN = [
     'darwin' => '/Applications/LibreOffice.app/Contents/MacOS/soffice',

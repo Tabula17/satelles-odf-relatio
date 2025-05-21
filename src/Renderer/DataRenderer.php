@@ -1,10 +1,11 @@
 <?php
 
-namespace Tabula17\Satelles\Odf;
+namespace Tabula17\Satelles\Odf\Renderer;
 
+use Tabula17\Satelles\Odf\DataRendererInterface;
 use Tabula17\Satelles\Odf\Exception\StrictValueConstraintException;
 use Tabula17\Satelles\Odf\Functions\Base;
-use Tabula17\Satelles\Odf\Renderer\DataRendererInterface;
+use Tabula17\Satelles\Odf\FunctionsInterface;
 
 /**
  * Class DataRenderer

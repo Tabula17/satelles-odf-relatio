@@ -1,6 +1,6 @@
 <?php
 
-namespace Tabula17\Satelles\Odf\Renderer;
+namespace Tabula17\Satelles\Odf;
 
 
 use Tabula17\Satelles\Odf\Exception\StrictValueConstraintException;

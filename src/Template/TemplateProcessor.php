@@ -1,8 +1,12 @@
 <?php
 
-namespace Tabula17\Satelles\Odf;
+namespace Tabula17\Satelles\Odf\Template;
 
 use Tabula17\Satelles\Odf\Exception\StrictValueConstraintException;
+use Tabula17\Satelles\Odf\File\OdfContainer;
+use Tabula17\Satelles\Odf\OdfContainerInterface;
+use Tabula17\Satelles\Odf\Renderer\DataRenderer;
+use Tabula17\Satelles\Odf\TemplateProcessorInterface;
 use Tabula17\Satelles\Xml\XmlPart;
 
 
