@@ -8,6 +8,9 @@ gen
 /Examples/Saves/*
 /Examples/tmp/*.pdf
 /Examples/tmp/*.odt
+/Examples/tmp/*.svg
+/Examples/tmp/*.jpg
+/Examples/tmp/*.png
 .DS_Store
 .AppleDouble
 .LSOverride
