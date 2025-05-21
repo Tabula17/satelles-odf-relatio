@@ -4,20 +4,71 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2aac6d4bc7a68c84149921b2acfd872b",
+    "content-hash": "f3d1ed45210250799be2d22dd98bf73a",
     "packages": [
+        {
+            "name": "xvii/satelles-securitas",
+            "version": "dev-main",
+            "source": {
+                "type": "git",
+                "url": "git@github.com:Tabula17/satelles-securitas.git",
+                "reference": "f10490764dc8b0a94d698750a8905cef5a9baa9c"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Tabula17/satelles-securitas/zipball/f10490764dc8b0a94d698750a8905cef5a9baa9c",
+                "reference": "f10490764dc8b0a94d698750a8905cef5a9baa9c",
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://tabula17.repo.repman.io/dists/%package%/%version%/%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
+            },
+            "require": {
+                "ext-dom": "*",
+                "ext-libxml": "*",
+                "ext-simplexml": "*",
+                "php": ">=8.4"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-main": "1.0.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Tabula17\\Satelles\\Securitas\\": "src/"
+                }
+            },
+            "notification-url": "https://tabula17.repo.repman.io/downloads",
+            "authors": [
+                {
+                    "name": "Martín Emilio Panizzo"
+                }
+            ],
+            "description": "Paquete de seguridad",
+            "homepage": "https://github.com/Tabula17/satelles-securitas",
+            "support": {
+                "source": "https://github.com/Tabula17/satelles-securitas/tree/main",
+                "issues": "https://github.com/Tabula17/satelles-securitas/issues"
+            },
+            "time": "2025-05-19T19:00:46+00:00"
+        },
         {
             "name": "xvii/satelles-xml-frater",
             "version": "dev-main",
             "source": {
                 "type": "git",
-                "url": "git@github.com:Tabula17/satelles-xml-frater.git",
-                "reference": "cec6670b7521695144fd9497bae1b18c8eea03a8"
+                "url": "https://github.com/Tabula17/satelles-xml-frater.git",
+                "reference": "1c9d3162f52361fde38b81206dacc3790ba729f9"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Tabula17/satelles-xml-frater/zipball/cec6670b7521695144fd9497bae1b18c8eea03a8",
-                "reference": "cec6670b7521695144fd9497bae1b18c8eea03a8",
+                "url": "https://api.github.com/repos/Tabula17/satelles-xml-frater/zipball/1c9d3162f52361fde38b81206dacc3790ba729f9",
+                "reference": "1c9d3162f52361fde38b81206dacc3790ba729f9",
                 "shasum": "",
                 "mirrors": [
                     {
@@ -59,7 +110,7 @@
                 "source": "https://github.com/Tabula17/satelles-xml-frater/tree/main",
                 "issues": "https://github.com/Tabula17/satelles-xml-frater/issues"
             },
-            "time": "2025-05-12T17:59:14+00:00"
+            "time": "2025-05-21T13:00:38+00:00"
         }
     ],
     "packages-dev": [

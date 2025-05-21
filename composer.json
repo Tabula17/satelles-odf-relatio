@@ -24,6 +24,7 @@
   "prefer-stable": true,
   "require": {
     "xvii/satelles-xml-frater": "^1.0",
+    "xvii/satelles-securitas": "^1.0",
     "php": ">=8.4",
     "ext-zip": "*",
     "ext-fileinfo": "*"

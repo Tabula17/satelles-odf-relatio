@@ -6,6 +6,7 @@ use Tabula17\Satelles\Odf\DataRendererInterface;
 use Tabula17\Satelles\Odf\Exception\StrictValueConstraintException;
 use Tabula17\Satelles\Odf\Functions\Base;
 use Tabula17\Satelles\Odf\FunctionsInterface;
+use Tabula17\Satelles\Securitas\Evaluator\SafeMathEvaluator;
 
 /**
  * Class DataRenderer
@@ -37,6 +38,7 @@ class DataRenderer implements DataRendererInterface
             $this->allData = $value;
         }
     }
+    private SafeMathEvaluator $safeMathEval;
 
 
     /**
@@ -53,6 +55,7 @@ class DataRenderer implements DataRendererInterface
         $this->allData = $data;
         $this->functions = $functions ?? new Base();
         $this->strictMode = $strictMode;
+        $this->safeMathEval = new SafeMathEvaluator();
     }
 
     /**
@@ -157,7 +160,8 @@ class DataRenderer implements DataRendererInterface
         $arithmetic = [];
         preg_match_all($this->arithmeticRegEx, $scriptParts[0], $arithmetic);
         $expression = implode('', (array)$this->interleaveArrays($varMembers, $arithmetic[0]));
-        $result = eval('return ' . $expression . ';');
+        $result = $this->safeMathEval->evaluate($expression);
+        //$result = eval('return ' . $expression . ';');
 
         $this->validateResult($result, $expression);
 
