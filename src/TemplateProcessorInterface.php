@@ -14,6 +14,15 @@ use Tabula17\Satelles\Xml\XmlPart;
  */
 interface TemplateProcessorInterface
 {
+    public DataRendererInterface $renderer {
+        get;
+        set;
+    }
+    public OdfContainerInterface $fileContainer {
+        get;
+        set;
+    }
+
     /**
      * Retrieves the template name based on the given type.
      *

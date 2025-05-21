@@ -25,8 +25,8 @@ class TemplateProcessor implements TemplateProcessorInterface
         '/left@/' => 'parent::*/preceding-sibling::',
         '/right@/' => 'parent::*/following-sibling::'
     ];
-    private DataRendererInterface $renderer;
-    private OdfContainerInterface $fileContainer;
+    public DataRendererInterface $renderer;
+    public OdfContainerInterface $fileContainer;
 
     /**
      * Constructor method to initialize the object with required dependencies.
