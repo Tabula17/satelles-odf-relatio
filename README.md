@@ -1,5 +1,4 @@
-
-# satelles-odf-relatio
+# XVII: satelles-odf-relatio
 <p>
 	<img src="https://img.shields.io/github/license/Tabula17/satelles-odf-relatio?style=default&logo=opensourceinitiative&logoColor=white&color=2141ec" alt="license">
 	<img src="https://img.shields.io/github/last-commit/Tabula17/satelles-odf-relatio?style=default&logo=git&logoColor=white&color=2141ec" alt="last-commit">
@@ -7,45 +6,55 @@
 	<img src="https://img.shields.io/github/languages/count/Tabula17/satelles-odf-relatio?style=default&color=2141ec" alt="repo-language-count">
 </p>
 
-Procesador de templates en openoffice al estilo JODReports.
+Procesador de plantillas ODF (OpenDocument) para PHP, inspirado en JODReports, que permite generar documentos dinámicos a partir de plantillas y datos personalizados.
 
-## Primeros pasos
+## Características
 
-### Requisitos previos
+- Carga y manipulación de archivos ODT.
+- Inserción de datos y generación de reportes.
+- Conversión a PDF usando LibreOffice/soffice.
+- Soporte para imágenes y recursos embebidos.
+- Ejemplos listos para usar.
 
-Asegúrate de que tu entorno cumple con los requisitos definidos en el archivo `composer.json`.
+## Requisitos
 
-Las clases para exportar y convertir archivos son wrappers simples que muestran la funcionalidad básica. Puedes usarlas tal cual o crear nuevas clases a partir de ellas según tus necesidades.
+- PHP 8.1 o superior
+- Composer
+- LibreOffice (opcional, para conversión a PDF)
 
+## Instalación
 
-### Instalación
-Instala **satelles-odf-relatio** de la siguiente manera:
+1. Clona el repositorio:
+   ```sh
+   git clone https://github.com/Tabula17/satelles-odf-relatio
+   cd satelles-odf-relatio
+   ```
 
-**Desde el código fuente:**
+2. Instala las dependencias:
+   ```sh
+   composer install
+   ```
 
-1. Clone el repositorio de satelles-odf-relatio:
+## Uso rápido
+
+Genera un reporte y guárdalo en PDF (si tienes LibreOffice instalado):
+
 ```sh
-❯ git clone https://github.com/Tabula17/satelles-odf-relatio
+php Examples/SaveToDisk.php
 ```
 
-2. Accede al directorio del proyecto:
-```sh
-❯ cd satelles-odf-relatio
-```
+Los archivos generados se guardan en el directorio `Examples/Saves`.
 
-3. Instala las dependencias con `composer` [<img align="center" src="https://img.shields.io/badge/PHP-777BB4.svg?style={badge_style}&logo=php&logoColor=white" />](https://www.php.net/)
-```sh
-❯ composer install
-```
-###  Ejemplos y uso
-Consulta la sección de [ejemplos](./Examples/README.md) para ver cómo utilizar el proyecto.
+Para más ejemplos y explicaciones consulta la sección de [ejemplos](./Examples/README.md).
 
----
+## Estructura del proyecto
 
-##  Licencia
+- `src/` — Código fuente principal.
+- `Examples/` — Scripts de ejemplo y plantillas.
+- `Examples/Templates/` — Plantillas ODT.
+- `Examples/Media/` — Recursos y datos de ejemplo.
+- `Examples/Saves/` — Reportes generados.
 
-Este proyecto está protegido por la licencia SELECT-A-LICENSE. Para más detalles, consulta el archivo LICENSE.
+## Licencia
 
-
-
-
+Consulta el archivo `LICENSE` para más información.
