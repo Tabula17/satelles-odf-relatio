@@ -212,20 +212,21 @@ class TemplateProcessor implements TemplateProcessorInterface
      * @param array $values An associative array of values used to update the media nodes.
      * @param string $searchTpl The search template defining the target media nodes to process.
      * @return void
+     * @throws StrictValueConstraintException
      */
     private function processMedia(XmlPart $node, array $values, string $searchTpl)
     {
 
-        // $searchTpl = $loop ? $this->getTemplateName('svgLoop') : $this->getTemplateName('svg');
-        $searchPattern = "descendant::draw:frame[svg:title=\"$searchTpl\"]";
-        $svgNodes = $node->xpath($searchPattern);
         $isSvg = str_contains($searchTpl, 'svg');
+        $attr = $isSvg ? 'svg:title' : '@draw:name';
+        $searchPattern = "descendant::draw:frame[$attr=\"$searchTpl\"]";
+        $svgNodes = $node->xpath($searchPattern);
         $variableSelector = $isSvg ? 'svg:desc' : 'svg:title';
         $imageSelector = $isSvg ? 'draw:image[@draw:mime-type="image/svg+xml"]' : 'draw:image';
-
         $images = [];
         $imageNames = [];
         foreach ($svgNodes as $drawNode) {
+            echo $drawNode->asXML() . PHP_EOL;
             $this->processMediaNode($drawNode, $variableSelector, $imageSelector, $values, $images, $imageNames);
         }
         $this->fileContainer->addImages($images, $imageNames);

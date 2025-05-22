@@ -13,34 +13,32 @@ Procesador de templates en openoffice al estilo JODReports.
 
 ### Requisitos previos
 
-Antes de empezar con satelles-odf-relatio, asegúrese de que su entorno de ejecución cumpla con los requisitos definidos en ```composer.json```.
+Asegúrate de que tu entorno cumple con los requisitos definidos en el archivo `composer.json`.
 
-Las clases definidas para exportar y convertir archivos son simples wrappers para mostrar la funcionalidad. Puede utilizarse tal cual están definidas o generarse nuevas clases a partir de las mismas.
+Las clases para exportar y convertir archivos son wrappers simples que muestran la funcionalidad básica. Puedes usarlas tal cual o crear nuevas clases a partir de ellas según tus necesidades.
 
 
 ### Instalación
+Instala **satelles-odf-relatio** de la siguiente manera:
 
-Instale satelles-odf-relatio mediante uno de los siguientes métodos:
-
-**Compilar desde el código fuente:**
+**Desde el código fuente:**
 
 1. Clone el repositorio de satelles-odf-relatio:
 ```sh
 ❯ git clone https://github.com/Tabula17/satelles-odf-relatio
 ```
 
-2. Navegue hasta el directorio del proyecto:
+2. Accede al directorio del proyecto:
 ```sh
 ❯ cd satelles-odf-relatio
 ```
 
-3. Instalar las dependencias del proyecto mediante `composer` [<img align="center" src="https://img.shields.io/badge/PHP-777BB4.svg?style={badge_style}&logo=php&logoColor=white" />](https://www.php.net/)
+3. Instala las dependencias con `composer` [<img align="center" src="https://img.shields.io/badge/PHP-777BB4.svg?style={badge_style}&logo=php&logoColor=white" />](https://www.php.net/)
 ```sh
 ❯ composer install
 ```
 ###  Ejemplos y uso
-[Ver ejemplos](./Examples/README.md)
-
+Consulta la sección de [ejemplos](./Examples/README.md) para ver cómo utilizar el proyecto.
 
 ---
 
