@@ -47,6 +47,8 @@ Los archivos generados se guardan en el directorio `Examples/Saves`.
 
 Para más ejemplos y explicaciones consulta la sección de [ejemplos](./Examples/README.md).
 
+Adaptación para uso asincrónico [`orbitalis-odf-exemplar`](https://github.com/Tabula17/orbitalis-odf-exemplar) para un procesamiento más eficiente y moderno.
+
 ## Estructura del proyecto
 
 - `src/` — Código fuente principal.
