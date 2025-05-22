@@ -226,7 +226,6 @@ class TemplateProcessor implements TemplateProcessorInterface
         $images = [];
         $imageNames = [];
         foreach ($svgNodes as $drawNode) {
-            echo $drawNode->asXML() . PHP_EOL;
             $this->processMediaNode($drawNode, $variableSelector, $imageSelector, $values, $images, $imageNames);
         }
         $this->fileContainer->addImages($images, $imageNames);
