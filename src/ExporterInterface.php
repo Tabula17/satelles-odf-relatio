@@ -15,7 +15,8 @@ interface ExporterInterface
 
     /**
      * @param string $file
+     * @param array|null $parameters
      * @return mixed
      */
-    public function processFile(string $file): mixed;
+    public function processFile(string $file, ?array $parameters = []): mixed;
 }

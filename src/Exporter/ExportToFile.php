@@ -50,12 +50,13 @@ class ExportToFile implements ExporterInterface
      * Processes the given file by validating its existence, applying a conversion (if applicable),
      * and copying it to the specified destination.
      *
-     * @param string $file The path to the file to be processed.
+     * @param string $file
+     * @param array|null $parameters
      * @return string Returns the result of the copy operation or the processed file.
      * @throws FileNotFoundException If the specified file does not exist.
      * @throws ConversionException If an error occurs during file conversion.
      */
-    public function processFile(string $file): string
+    public function processFile(string $file, ?array $parameters = []): string
     {
         $filename = $this->filename ?? basename($file);
 

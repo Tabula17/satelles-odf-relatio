@@ -47,11 +47,12 @@ class ExportToMail implements ExporterInterface
     /**
      * Processes the given file by optionally converting it and attaching it to an email.
      *
-     * @param string $file The file to be processed.
+     * @param string $file
+     * @param array|null $parameters
      * @return mixed The result of sending the email after the file is processed and attached.
      * @throws ConversionException If the file conversion fails.
      */
-    public function processFile(string $file): mixed
+    public function processFile(string $file, ?array $parameters = []): mixed
     {
         $filename = $this->filename ?? basename($file);
         if ($this->converter) {
