@@ -35,9 +35,9 @@ Procesador de plantillas ODF (OpenDocument) para PHP, inspirado en JODReports, q
    composer install
    ```
 
-## Uso rápido
+## Ejemplo de uso
 
-Genera un reporte y guárdalo en PDF (si tienes LibreOffice instalado):
+Este script genera un reporte de ejmplo y lo guarda en PDF (si tienes LibreOffice instalado):
 
 ```sh
 php Examples/SaveToDisk.php
