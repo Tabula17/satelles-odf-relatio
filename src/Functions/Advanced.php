@@ -51,10 +51,14 @@ use Picqer\Barcode\Types\TypeUpcExtension2;
 use Picqer\Barcode\Types\TypeUpcExtension5;
 
 /**
- *
+ * Advanced class for generating barcodes and QR codes.
  */
 class Advanced extends Base
 {
+    /**
+     * The mapping of barcode generators.
+     * @var array|string[]
+     */
     private array $mapBarcodes = [
         'codabar' => TypeCodabar::class,
         'code11' => TypeCode11::class,
@@ -93,16 +97,28 @@ class Advanced extends Base
         'upcextension2' => TypeUpcExtension2::class,
         'upcextension5' => TypeUpcExtension5::class,
     ];
+    /**
+     * The mapping of output formats to barcode renderers.
+     * @var array|string[]
+     */
     private array $mapBarcodeRenderers = [
         'png' => PngRenderer::class,
         'svg' => SvgRenderer::class,
         'jpg' => JpgRenderer::class,
         'jpeg' => JpgRenderer::class,
     ];
+    /**
+     * The mapping of output formats to QR code renderers.
+     * @var array|string[]
+     */
     private array $mapQRCodeRenderers = [
         'png' => PngWriter::class,
         'svg' => SvgWriter::class
     ];
+    /**
+     * The working directory where barcodes and QR codes will be saved.
+     * @var string|null
+     */
     public ?string $workingDir {
         /**
          * @return string

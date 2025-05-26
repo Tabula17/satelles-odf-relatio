@@ -5,6 +5,8 @@ namespace Tabula17\Satelles\Odf\Exporter;
 use Exception;
 use Tabula17\Satelles\Odf\ConverterInterface;
 use Tabula17\Satelles\Odf\Exception\ConversionException;
+use Tabula17\Satelles\Odf\Exception\ExporterException;
+use Tabula17\Satelles\Odf\Exception\FileException;
 use Tabula17\Satelles\Odf\Exception\FileNotFoundException;
 use Tabula17\Satelles\Odf\ExporterInterface;
 
@@ -43,7 +45,7 @@ class ExportToFile implements ExporterInterface
         $this->path = $path;
         $this->filename = $filename;
         $this->converter = $converter;
-        $this->exporterName = $exporterName ?? 'ExportToFile'.uniqid('', false);
+        $this->exporterName = $exporterName ?? 'ExportToFile' . uniqid('', false);
     }
 
     /**
@@ -53,26 +55,27 @@ class ExportToFile implements ExporterInterface
      * @param string $file
      * @param array|null $parameters
      * @return string Returns the result of the copy operation or the processed file.
-     * @throws FileNotFoundException If the specified file does not exist.
-     * @throws ConversionException If an error occurs during file conversion.
+     * @throws ExporterException
      */
     public function processFile(string $file, ?array $parameters = []): string
     {
         $filename = $this->filename ?? basename($file);
 
         if (!file_exists($file)) {
-            throw new FileNotFoundException("The file '$file' does not exist in the working directory.");
+            throw new ExporterException(FileNotFoundException::FILE_NOT_FOUND . ': ' . $file);
         }
         if ($this->converter) {
             try {
                 $file = $this->converter->convert($file, $filename) ?? $file;
-
             } catch (Exception $e) {
-                throw new ConversionException($e->getMessage());
+                throw new ExporterException(sprintf(ExporterException::DEFAULT_MESSAGE, $e->getMessage()));
             }
         }
         $filePath = $this->path . DIRECTORY_SEPARATOR . $filename;
-        copy($file, $filePath);
+        if (!copy($file, $filePath)) {
+            $error = error_get_last();
+            throw new ExporterException(sprintf(FileException::CANT_COPY, $file, $filePath) . ':' . PHP_EOL . $error['message']);
+        }
         return $filePath;
     }
 

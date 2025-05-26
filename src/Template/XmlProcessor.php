@@ -4,10 +4,9 @@ namespace Tabula17\Satelles\Odf\Template;
 
 use Tabula17\Satelles\Odf\DataRendererInterface;
 use Tabula17\Satelles\Odf\Exception\StrictValueConstraintException;
-use Tabula17\Satelles\Odf\File\OdfContainer;
 use Tabula17\Satelles\Odf\OdfContainerInterface;
 use Tabula17\Satelles\Odf\Renderer\DataRenderer;
-use Tabula17\Satelles\Odf\TemplateProcessorInterface;
+use Tabula17\Satelles\Odf\XmlProcessorInterface;
 use Tabula17\Satelles\Xml\XmlPart;
 
 
@@ -16,7 +15,7 @@ use Tabula17\Satelles\Xml\XmlPart;
  * It enables handling of various template constructs such as dynamic loops,
  * conditional logic, and media rendering within XML documents.
  */
-class TemplateProcessor implements TemplateProcessorInterface
+class XmlProcessor implements XmlProcessorInterface
 {
     private const string TEMPLATE_PREFIX = 'odf-tpl-';
     private const array XPATH_REPLACEMENTS = [
@@ -71,7 +70,7 @@ class TemplateProcessor implements TemplateProcessorInterface
             $this->processLoopTemplates($xml, $data);
             $this->processTextNodes($xml, $data);
             $this->processMedia($xml, $data, $this->getTemplateName(TemplateConfig::IMAGE));
-            $this->processMedia($xml, $data, $this->getTemplateName(TemplateConfig::SVG));;
+            $this->processMedia($xml, $data, $this->getTemplateName(TemplateConfig::SVG));
         } else {
             $this->processTemplatesInLoop($xml, $data, $alias);
         }
@@ -170,7 +169,7 @@ class TemplateProcessor implements TemplateProcessorInterface
             $loopAlias = trim($loopDataMembers[1]);
             if (isset($data[$loopMember]) && is_array($data[$loopMember])) {
                 $loopNode = $node->xpath($loopNodeQuery);
-                $node->setAttribute('text:description', "pax-tpl-loop-$loopMember"); //
+                $node->setAttribute('text:description', "{$this->getTemplateName(TemplateConfig::LOOP)}-$loopMember"); //
                 $node->delete();
                 foreach ($loopNode as $loop) {
                     $this->processTemplate($loop, $data[$loopMember], $loopAlias);
@@ -214,7 +213,7 @@ class TemplateProcessor implements TemplateProcessorInterface
      * @return void
      * @throws StrictValueConstraintException
      */
-    private function processMedia(XmlPart $node, array $values, string $searchTpl)
+    private function processMedia(XmlPart $node, array $values, string $searchTpl): void
     {
 
         $isSvg = str_contains($searchTpl, 'svg');
@@ -244,7 +243,7 @@ class TemplateProcessor implements TemplateProcessorInterface
      * @return void
      * @throws StrictValueConstraintException
      */
-    public function processMediaNode(XmlPart $drawNode, string $variableSelector, string $imageSelector, array $values, array &$images, array &$imageNames): void
+    private function processMediaNode(XmlPart $drawNode, string $variableSelector, string $imageSelector, array $values, array &$images, array &$imageNames): void
     {
         $variable = $drawNode->xpath($variableSelector);
         if ($variable) {
@@ -290,10 +289,136 @@ class TemplateProcessor implements TemplateProcessorInterface
             return $value;
         };
         $calc = array_map($doValue, $calc[0]);
+
+        // Handle special case for 'in' and 'notin' operators
         if (count($calc) === 3 && (strtolower($calc[1]) === 'in' || strtolower($calc[1]) === 'notin')) {
             $haystack = explode(',', $calc[2]);
             return strtolower($calc[1]) === 'notin' ? !in_array($doValue($calc[0]), $haystack) : in_array($doValue($calc[0]), $haystack);
         }
-        return eval('return ' . implode(' ', $calc) . ';');
+
+        // Safe expression evaluation without eval()
+        return $this->safeEvaluateExpression($calc);
+    }
+
+    /**
+     * Safely evaluates an expression without using eval().
+     * Supports basic comparison and logical operators.
+     *
+     * @param array $tokens Array of tokens representing the expression
+     * @return bool The result of the evaluated expression
+     */
+    private function safeEvaluateExpression(array $tokens): bool
+    {
+        // Remove any empty tokens
+        $tokens = array_values(array_filter($tokens, function($token) {
+            return $token !== '' && $token !== ' ';
+        }));
+
+        // Simple expression with just one token (e.g., a boolean value)
+        if (count($tokens) === 1) {
+            $value = $tokens[0];
+            if (is_bool($value)) {
+                return $value;
+            }
+            if (is_string($value)) {
+                $lowerValue = strtolower(trim($value, "'\""));
+                if ($lowerValue === 'true') return true;
+                if ($lowerValue === 'false') return false;
+                if ($lowerValue === '1') return true;
+                if ($lowerValue === '0') return false;
+                if ($lowerValue === '') return false;
+                return (bool)$value;
+            }
+            return (bool)$value;
+        }
+
+        // Handle comparison operators
+        if (count($tokens) === 3) {
+            $left = $this->normalizeValue($tokens[0]);
+            $operator = trim($tokens[1]);
+            $right = $this->normalizeValue($tokens[2]);
+
+            switch ($operator) {
+                case '==':
+                case '=':
+                    return $left == $right;
+                case '!=':
+                case '<>':
+                    return $left != $right;
+                case '>':
+                    return $left > $right;
+                case '<':
+                    return $left < $right;
+                case '>=':
+                    return $left >= $right;
+                case '<=':
+                    return $left <= $right;
+                case '&&':
+                case 'and':
+                    return $left && $right;
+                case '||':
+                case 'or':
+                    return $left || $right;
+            }
+        }
+
+        // Handle more complex expressions with logical operators
+        if (count($tokens) > 3) {
+            // Look for 'and' or '&&' operators
+            $andPos = array_search('and', array_map('strtolower', $tokens));
+            if ($andPos === false) {
+                $andPos = array_search('&&', $tokens);
+            }
+
+            if ($andPos !== false) {
+                $leftExpr = array_slice($tokens, 0, $andPos);
+                $rightExpr = array_slice($tokens, $andPos + 1);
+                return $this->safeEvaluateExpression($leftExpr) && $this->safeEvaluateExpression($rightExpr);
+            }
+
+            // Look for 'or' or '||' operators
+            $orPos = array_search('or', array_map('strtolower', $tokens));
+            if ($orPos === false) {
+                $orPos = array_search('||', $tokens);
+            }
+
+            if ($orPos !== false) {
+                $leftExpr = array_slice($tokens, 0, $orPos);
+                $rightExpr = array_slice($tokens, $orPos + 1);
+                return $this->safeEvaluateExpression($leftExpr) || $this->safeEvaluateExpression($rightExpr);
+            }
+        }
+
+        // Default fallback - if we can't evaluate, return false
+        return false;
+    }
+
+    /**
+     * Normalizes a value for comparison by removing quotes and converting to appropriate type.
+     *
+     * @param mixed $value The value to normalize
+     * @return mixed The normalized value
+     */
+    private function normalizeValue($value)
+    {
+        if (is_numeric($value)) {
+            return $value + 0; // Convert to int or float
+        }
+
+        if (is_string($value)) {
+            // Remove surrounding quotes if present
+            $value = trim($value);
+            if ((substr($value, 0, 1) === "'" && substr($value, -1) === "'") || 
+                (substr($value, 0, 1) === '"' && substr($value, -1) === '"')) {
+                $value = substr($value, 1, -1);
+            }
+
+            // Convert string boolean values
+            $lowerValue = strtolower($value);
+            if ($lowerValue === 'true') return true;
+            if ($lowerValue === 'false') return false;
+        }
+
+        return $value;
     }
 }

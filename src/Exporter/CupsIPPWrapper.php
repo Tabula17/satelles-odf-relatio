@@ -10,6 +10,8 @@ use Smalot\Cups\Manager\PrinterManager;
 use Smalot\Cups\Model\Job;
 use Smalot\Cups\Transport\Client;
 use Smalot\Cups\Transport\ResponseParser;
+use Tabula17\Satelles\Odf\Exception\ConversionException;
+use Tabula17\Satelles\Odf\Exception\ExporterException;
 
 /**
  *
@@ -50,13 +52,14 @@ class CupsIPPWrapper implements PrintSenderInterface
      * @return mixed The result of the print job submission.
      * @throws ClientExceptionInterface
      * @throws CupsException
+     * @throws ExporterException
      */
     public function print(string $file): mixed
     {
         $printers = $this->printerManager->findByName($this->printer);
 
         if (empty($printers)) {
-            throw new RuntimeException("No se encontró la impresora: {$this->printer}");
+            throw new ExporterException(sprintf(ExporterException::PRINTER_NOT_FOUND, $this->printer));
         }
 
         $printer = $printers[0];

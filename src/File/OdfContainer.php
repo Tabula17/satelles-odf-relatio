@@ -6,7 +6,10 @@
 
 namespace Tabula17\Satelles\Odf\File;
 
+use Exception;
+use Tabula17\Satelles\Odf\Exception\FileException;
 use Tabula17\Satelles\Odf\Exception\RuntimeException;
+use Tabula17\Satelles\Odf\Exception\XmlProcessException;
 use Tabula17\Satelles\Odf\OdfContainerInterface;
 use Tabula17\Satelles\Odf\XmlMemberPath;
 use Tabula17\Satelles\Xml\XmlPart;
@@ -18,34 +21,26 @@ use ZipArchive;
  */
 class OdfContainer implements OdfContainerInterface
 {
-
-    private const string PICTURES_PATH = 'Pictures/';
-
     /**
-     * @var XmlPart
+     * @var ZipArchive
      */
-    private XmlPart $manifestXml;
-    /**
-     * @var XmlPart
-     */
-    private XmlPart $stylesXml;
-    /**
-     * @var XmlPart
-     */
-    private XmlPart $settingsXml;
-    /**
-     * @var XmlPart
-     */
-    private XmlPart $contentXml;
-
     private ZipArchive $zip;
+    /**
+     * @var string
+     */
     private string $file;
+    /**
+     * @var bool
+     */
     private bool $zipOpened = false;
-    private bool $coroutine;
-    private $parts;
+    /**
+     * @var XmlPart[]|null
+     */
+    private ?array $parts = [];
 
 
     /**
+     * Constructor for the OdfContainer class.
      * @param ZipArchive $zipHandler
      */
     public function __construct(ZipArchive $zipHandler)
@@ -53,6 +48,9 @@ class OdfContainer implements OdfContainerInterface
         $this->zip = $zipHandler;
     }
 
+    /**
+     * Destructor for the OdfContainer class.
+     */
     public function __destruct()
     {
         if ($this->zipOpened) {
@@ -61,30 +59,23 @@ class OdfContainer implements OdfContainerInterface
         }
     }
 
+    /**
+     * Returns the path to the 'Pictures' directory within the ODT file.
+     * @return string
+     */
     public function getPicturesFolder(): string
     {
         return XmlMemberPath::PICTURES->value;
     }
 
+    /**
+     * Loads the ODT file and its XML parts.
+     * @param string $file
+     * @return void
+     * @throws RuntimeException
+     */
     public function loadFile(string $file): void
     {
-        /*
-        if ($this->zip->open($file) !== true) {
-            throw new RuntimeException("Error while Opening the file '$file' - Check your odf file");
-        }
-        foreach (XmlMemberPath::cases() as $member) {
-            if ($member->name() === 'pictures') {
-                continue;
-            }
-        //foreach (XmlMember::cases() as $memberName) {
-            $path =$member->value;
-            if (($xml = $this->zip->getFromName($path)) === false) {
-                throw new RuntimeException("Nothing to parse - check that the $path file is correctly formed");
-            }
-            $part = $member->name() . 'Xml';
-            $this->$part = new XmlPart($xml);
-        }*/
-        //$this->zip->close();
         $this->file = $file;
         foreach (XmlMemberPath::cases() as $member) {
             if ($member->name() === 'pictures' || $member->name() === 'settings') {
@@ -94,6 +85,12 @@ class OdfContainer implements OdfContainerInterface
         }
     }
 
+    /**
+     * Loads a specific part of the ODT file based on the provided XmlMemberPath.
+     * @param XmlMemberPath $part
+     * @return void
+     * @throws XmlProcessException
+     */
     public function loadPart(XmlMemberPath $part): void
     {
         if ($part->name() === 'pictures') {
@@ -102,13 +99,23 @@ class OdfContainer implements OdfContainerInterface
         $this->ensureZipOpened();
         $path = $part->value;
         if (($xml = $this->zip->getFromName($path)) === false) {
-            throw new RuntimeException("Nothing to parse - check that the $path file is correctly formed");
+            throw new XmlProcessException(sprintf(XmlProcessException::EMPTY_PARSE_ERROR, $path));
         }
         // $partName = $part->name() . 'Xml';
         // $this->$partName = new XmlPart($xml);
-        $this->parts[$part->name()] = new XmlPart($xml);
+        try {
+            $xml = new XmlPart($xml);
+        } catch (Exception $e) {
+            throw new XmlProcessException(sprintf(XmlProcessException::FAILED_TO_PARSE_XML, $path), 0, $e);
+        }
+        $this->parts[$part->name()] = $xml;
     }
 
+    /**
+     * Retrieves a specific part of the ODT file based on the provided XmlMemberPath.
+     * @param XmlMemberPath $part
+     * @return XmlPart|null
+     */
     public function getPart(XmlMemberPath $part): ?XmlPart
     {
         if ($part->name() === 'pictures') {
@@ -118,6 +125,7 @@ class OdfContainer implements OdfContainerInterface
     }
 
     /**
+     * Registers a file in the ODT manifest.
      * @param string $fileName
      * @param $mime
      * @return void
@@ -131,15 +139,25 @@ class OdfContainer implements OdfContainerInterface
         }
     }
 
-
+    /**
+     * Adds an image file to the ODT file by reading it as a stream and including it in the 'Pictures' directory inside the archive.
+     * @param string $imgPath
+     * @param string|null $name
+     * @return void
+     * @throws XmlProcessException
+     */
     private function addStreamImage(string $imgPath, ?string $name = null): void
     {
         $this->ensureZipOpened();
         $stream = fopen($imgPath, 'rb');
         $fileName = $name ?? basename($imgPath);
+        $content = stream_get_contents($stream);
+        if ($content === false) {
+            throw new XmlProcessException(sprintf(FileException::CANT_LOAD_STREAM, $imgPath));
+        }
         $this->zip->addFromString(
             XmlMemberPath::PICTURES->value . $fileName,
-            stream_get_contents($stream)
+            $content
         );
         fclose($stream);
     }
@@ -151,7 +169,7 @@ class OdfContainer implements OdfContainerInterface
      * @param string|null $name An optional name for the image file within the archive.
      *                          If not provided, the basename of the $imgPath will be used.
      * @return void Returns the current instance for method chaining.
-     * @throws RuntimeException If the ODT file cannot be opened.
+     * @throws XmlProcessException
      */
     public function addImage(string $imgPath, ?string $name = null): void
     {
@@ -165,7 +183,7 @@ class OdfContainer implements OdfContainerInterface
      * @param array|null $name An optional array of names for the image files within the archive.
      *                          If not provided, the basename of each $imgPath will be used.
      * @return void Returns the current instance for method chaining.
-     * @throws RuntimeException If the ODT file cannot be opened.
+     * @throws XmlProcessException If the ODT file cannot be opened.
      */
     public function addImages(array $imgPaths, ?array $name = null): void
     {
@@ -178,10 +196,15 @@ class OdfContainer implements OdfContainerInterface
 
     }
 
+    /**
+     * Saves the ODT file by writing all loaded XML parts back into the archive.
+     * @return void
+     * @throws XmlProcessException
+     */
     public function saveFile(): void
     {
         if (empty($this->file)) {
-            throw new RuntimeException("No hay archivo cargado");
+            throw new XmlProcessException(XmlProcessException::XML_NOT_LOADED);
         }
         $this->ensureZipOpened();
         try {
@@ -197,18 +220,19 @@ class OdfContainer implements OdfContainerInterface
         }
     }
 
+    /**
+     * Ensures that the ZIP archive is opened before performing any operations on it.
+     * @return void
+     * @throws XmlProcessException
+     */
     private function ensureZipOpened(): void
     {
         if (!$this->zipOpened) {
             if ($this->zip->open($this->file) !== true) {
-                throw new RuntimeException("Error while Opening the file '$this->file' - Check your odf file");
+                throw new XmlProcessException(sprintf(XmlProcessException::FAILED_TO_OPEN_FILE, $this->file));
             }
             $this->zipOpened = true;
         }
     }
 
-    private function sanitizeFilename(string $name): string
-    {
-        return preg_replace('/[^a-zA-Z0-9\-_.]/', '', $name);
-    }
 }

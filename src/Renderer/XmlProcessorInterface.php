@@ -12,7 +12,7 @@ use Tabula17\Satelles\Xml\XmlPart;
  * It enables handling of various template constructs such as dynamic loops,
  * conditional logic, and media rendering within XML documents.
  */
-interface TemplateProcessorInterface
+interface XmlProcessorInterface
 {
     public DataRendererInterface $renderer {
         get;

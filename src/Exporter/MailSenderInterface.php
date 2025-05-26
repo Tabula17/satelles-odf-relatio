@@ -2,6 +2,8 @@
 
 namespace Tabula17\Satelles\Odf\Exporter;
 
+use Tabula17\Satelles\Odf\Exception\ExporterException;
+
 /**
  *
  */
@@ -16,6 +18,7 @@ interface MailSenderInterface
 
     /**
      * @return mixed
+     * @throws ExporterException
      */
     public function send(): mixed;
 }

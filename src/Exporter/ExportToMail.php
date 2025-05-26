@@ -5,6 +5,7 @@ namespace Tabula17\Satelles\Odf\Exporter;
 use Exception;
 use Tabula17\Satelles\Odf\ConverterInterface;
 use Tabula17\Satelles\Odf\Exception\ConversionException;
+use Tabula17\Satelles\Odf\Exception\ExporterException;
 use Tabula17\Satelles\Odf\ExporterInterface;
 
 /**
@@ -41,7 +42,7 @@ class ExportToMail implements ExporterInterface
         $this->filename = $filename;
         $this->converter = $converter;
         $this->mail = $mail;
-        $this->exporterName = $exporterName ?? 'ExportToMail'.uniqid('', false);
+        $this->exporterName = $exporterName ?? 'ExportToMail' . uniqid('', false);
     }
 
     /**
@@ -51,6 +52,7 @@ class ExportToMail implements ExporterInterface
      * @param array|null $parameters
      * @return mixed The result of sending the email after the file is processed and attached.
      * @throws ConversionException If the file conversion fails.
+     * @throws ExporterException
      */
     public function processFile(string $file, ?array $parameters = []): mixed
     {
@@ -59,7 +61,7 @@ class ExportToMail implements ExporterInterface
             try {
                 $file = $this->converter->convert($file, $filename) ?? $file;
             } catch (Exception $e) {
-                throw new ConversionException($e->getMessage());
+                throw new ExporterException(sprintf(ExporterException::DEFAULT_MESSAGE, $e->getMessage()));
             }
         }
         $this->mail->attach($file, $filename);

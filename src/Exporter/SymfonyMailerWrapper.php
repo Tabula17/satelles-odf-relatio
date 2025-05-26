@@ -5,6 +5,8 @@ namespace Tabula17\Satelles\Odf\Exporter;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\Transport;
 use Symfony\Component\Mime\Email;
+use Tabula17\Satelles\Odf\Exception\ExporterException;
+use Throwable;
 
 /**
  * Implements the MailSenderInterface to handle email sending through Symfony Mailer.
@@ -53,11 +55,18 @@ class SymfonyMailerWrapper implements MailSenderInterface
      * Sends the mail using the specified transport.
      *
      * @return mixed The result of the mail sending operation, as returned by the transport.
-     * @throws TransportExceptionInterface
-     * @throws TransportExceptionInterface
+     * @throws ExporterException
      */
     public function send(): mixed
     {
-        return $this->transport->send($this->mail)->getMessageId();
+        try {
+            $msg = $this->transport->send($this->mail);
+            if(!$msg) {
+                throw new ExporterException(ExporterException::SENDER_NO_RETURN);
+            }
+            return $msg->getMessageId();
+        } catch (Throwable $e) {
+            throw new ExporterException(sprintf(ExporterException::SENDER_ERROR, $e->getMessage()), 0, $e);
+        }
     }
 }

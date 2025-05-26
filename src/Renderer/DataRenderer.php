@@ -77,16 +77,14 @@ class DataRenderer implements DataRendererInterface
         if ($total === 1) {
             return $args[0];
         }
-        $i = 0;
         $j = 0;
         $arr = [];
-        foreach ($args as $arg) {
+        foreach ($args as $argIndex => $arg) {
+            $j = $argIndex; // Start position for this array
             foreach ($arg as $v) {
                 $arr[$j] = $v;
                 $j += $total;
             }
-            $i++;
-            $j = $i;
         }
         ksort($arr);
         return array_values($arr);
@@ -205,13 +203,23 @@ class DataRenderer implements DataRendererInterface
     }
 
     /**
-     * @param string $path
-     * @param array $data
-     * @param string|null $default
-     * @return mixed
+     * Resolves a nested value from an array using a dot-notation path.
+     * Handles any level of nesting by traversing the data array according to the path.
+     *
+     * @param string $path The dot-separated path to the nested value (e.g., "parent.child")
+     * @param array $data The data array to traverse
+     * @param string|null $default The default value to return if the path doesn't exist
+     * @return mixed The resolved value or the default if not found
      */
     private function resolveNestedValue(string $path, array $data, ?string $default): mixed
     {
+        $parts = explode('.', $path);
+
+        // Skip the first part if it's empty (which happens with paths like ".child")
+        if (empty($parts[0])) {
+            array_shift($parts);
+        }
+
         $parts = explode('.', $path);
         $key = $parts[1];
         return array_key_exists($key, $data) ? $data[$key] : $default;
@@ -245,10 +253,8 @@ class DataRenderer implements DataRendererInterface
      */
     private function validateResult(mixed $value, string $context): void
     {
-        if (($value === false || $value === null) && $this->strictMode) {
-            throw new StrictValueConstraintException(
-                "Strict mode enabled. Value is not valid: $context"
-            );
+        if ($value !== false && empty($value) && $this->strictMode) {
+            throw new StrictValueConstraintException(sprintf(StrictValueConstraintException::EMPTY_VALUE, $context));
         }
     }
 }

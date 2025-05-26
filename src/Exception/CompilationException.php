@@ -2,12 +2,8 @@
 
 namespace Tabula17\Satelles\Odf\Exception;
 
-use Exception;
-
-/**
- *
- */
-class CompilationException extends Exception
+class CompilationException extends RelatioException
 {
-
+    public const string DEFAULT_MESSAGE = 'Error during file compilation.';
 }
+

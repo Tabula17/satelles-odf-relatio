@@ -18,7 +18,7 @@ Procesador de plantillas ODF (OpenDocument) para PHP, inspirado en JODReports, q
 
 ## Requisitos
 
-- PHP 8.1 o superior
+- PHP 8.4 o superior
 - Composer
 - LibreOffice (opcional, para conversión a PDF)
 

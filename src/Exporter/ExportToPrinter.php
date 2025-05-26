@@ -3,6 +3,7 @@
 namespace Tabula17\Satelles\Odf\Exporter;
 
 use Exception;
+use Tabula17\Satelles\Odf\Exception\ExporterException;
 use Tabula17\Satelles\Odf\ExporterInterface;
 
 /**
@@ -33,7 +34,7 @@ class ExportToPrinter implements ExporterInterface
     public function __construct(PrintSenderInterface $printer, ?string $exporterName = null)
     {
         $this->printer = $printer;
-        $this->exporterName = $exporterName ?? 'ExportToPrinter'.uniqid('', false);
+        $this->exporterName = $exporterName ?? 'ExportToPrinter' . uniqid('', false);
     }
 
 
@@ -41,13 +42,14 @@ class ExportToPrinter implements ExporterInterface
      * @param string $file
      * @param array|null $parameters
      * @return mixed
+     * @throws ExporterException
      */
     public function processFile(string $file, ?array $parameters = []): mixed
     {
         try {
             return $this->printer->print($file);
-        }catch (Exception $e) {
-            return false;
+        } catch (Exception $e) {
+            throw new ExporterException($e->getMessage());
         }
     }
 }

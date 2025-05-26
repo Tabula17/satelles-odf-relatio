@@ -1,6 +1,8 @@
 <?php
 
 namespace Tabula17\Satelles\Odf;
+use Tabula17\Satelles\Odf\Exception\ValidationException;
+
 /**
  * An enumeration representing XML member paths used in a specific context.
  * Each case corresponds to a file path related to a defined XML component.
@@ -37,6 +39,10 @@ enum XmlMemberPath: string
             self::PICTURES => 'pictures',
         };
     }
+
+    /**
+     * @throws ValidationException
+     */
     public static function fromName(string $name): string{
         return match ($name) {
             'content' => self::CONTENT->value,
@@ -44,7 +50,7 @@ enum XmlMemberPath: string
             'settings' => self::SETTINGS->value,
             'manifest' => self::MANIFEST->value,
             'pictures' => self::PICTURES->value,
-            default => throw new \InvalidArgumentException("Invalid name: $name"),
+            default => throw new ValidationException(sprintf(ValidationException::INVALID_ENUM, $name, self::class)),
         };
     }
 }
