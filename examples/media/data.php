@@ -17,7 +17,7 @@ function random_word($len = 10): string
 /**
  * @throws RandomException
  */
-function random_float()
+function random_float(): float|int
 {
     return (random_int(0, 10000) / 10000);
 }

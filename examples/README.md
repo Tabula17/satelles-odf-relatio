@@ -4,7 +4,7 @@
 
 * [Templates](templates) contiene las plantillas utilizadas en los scripts.
   * [Report.odt](templates/Report.odt)
-  * [Report_Complex.odt](/templates/Report_Complex.odt)
+  * [Report_Complex.odt](templates/Report_Complex.odt)
 * [Media](media)
   * [Data.php](media/data.php) genera datos aleatorios en combinación con las imágenes existentes en el directorio [Media](media) para alimentar las plantillas y generar reportes de ejemplo.
 * [Saves](saves) es el directorio donde se guardan los reportes generados.

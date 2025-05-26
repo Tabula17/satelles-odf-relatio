@@ -27,7 +27,8 @@
     "xvii/satelles-securitas": "^1.0",
     "php": ">=8.4",
     "ext-zip": "*",
-    "ext-fileinfo": "*"
+    "ext-fileinfo": "*",
+    "ext-simplexml": "*"
   },
   "require-dev": {
     "picqer/php-barcode-generator": "^3.2",
