@@ -1,9 +1,9 @@
 <?php
 require __DIR__ . str_replace('/', DIRECTORY_SEPARATOR, '/../vendor/autoload.php');
-include __DIR__ . str_replace('/', DIRECTORY_SEPARATOR, '/Media/Data.php');
+include __DIR__ . str_replace('/', DIRECTORY_SEPARATOR, '/media/data.php');
 
-use Tabula17\Satelles\Odf\Converter\SofficeConverter;
-use Tabula17\Satelles\Odf\Exporter\ExportToFile;
+use Tabula17\Satelles\Odf\Exporter\CupsIPPWrapper;
+use Tabula17\Satelles\Odf\Exporter\ExportToPrinter;
 use Tabula17\Satelles\Odf\File\OdfContainer;
 use Tabula17\Satelles\Odf\Functions\Advanced;
 use Tabula17\Satelles\Odf\OdfProcessor;
@@ -19,35 +19,35 @@ const SOFFICE_BIN = [
  */
 $soffice = SOFFICE_BIN[strtolower(PHP_OS_FAMILY)] ?? SOFFICE_BIN['linux'];
 
+
+$cli_options = getopt('', ['printer:']);
+$required_options = ['printer'];
+if (!$cli_options) {
+    throw new RuntimeException("Missing options");
+}
+$options_missing = array_diff($required_options, array_keys($cli_options));
+if (count($options_missing) > 0) {
+    throw new RuntimeException("Missing options: " . implode(', ', $options_missing));
+}
+$to = explode(',', $cli_options['t']);
 $baseDir = realpath(__DIR__ . DIRECTORY_SEPARATOR . 'tmp');
 $zipHandler = new ZipArchive();
 $fileContainer = new OdfContainer($zipHandler);
 $functions = new Advanced($baseDir);
-$data = random_data(realpath(__DIR__ . DIRECTORY_SEPARATOR . 'Media'));
+$data = random_data_complex();
 
 $dataRenderer = new DataRenderer($data, $functions);
-
-$template = __DIR__ . DIRECTORY_SEPARATOR . 'Templates'.DIRECTORY_SEPARATOR.'Report.odt';
-
+$template = __DIR__ . DIRECTORY_SEPARATOR . 'templates/Report_Complex.odt';
 $odfLoader = new OdfProcessor($template, $baseDir, $fileContainer, $dataRenderer);
-
 $functions->workingDir = $odfLoader->workingDir;
 
-$savesDir =  realpath(__DIR__ . DIRECTORY_SEPARATOR . 'Saves');
 
-$filename = "Report generated - " . date('Y-m-d H:i:s') . ".pdf";
 
-if (file_exists($soffice)) {
-    $converter = new SofficeConverter(format: 'pdf', outputDir: $odfLoader->workingDir, soffice: $soffice, overwrite: false);
-} else {
-    $filename = str_replace('.pdf', '.odt', $filename);
-    $converter = null;
-    trigger_error("No se encontró el binario de libreoffice, no podemos convertir el archivo", E_USER_NOTICE);
-}
-
-$exporter = new ExportToFile($savesDir, $filename, $converter);
+$cups = new CupsIPPWrapper('HP-Photosmart-C4380-series');
+$printer = new ExportToPrinter($cups);
 
 $odfLoader->loadFile()
     ->process($data)
-    ->compile()
-    ->exportTo($exporter)->cleanUpWorkingDir();
+    ->compile();
+$odfLoader->exportTo($printer);
+$odfLoader->cleanUpWorkingDir();

@@ -1,6 +1,7 @@
 <?php
+// This file is part of the Satelles ODF library.
 require __DIR__ . str_replace('/', DIRECTORY_SEPARATOR, '/../vendor/autoload.php');
-include __DIR__ . str_replace('/', DIRECTORY_SEPARATOR, '/Media/Data.php');
+include __DIR__ . str_replace('/', DIRECTORY_SEPARATOR, '/media/data.php');
 
 use Tabula17\Satelles\Odf\Converter\SofficeConverter;
 use Tabula17\Satelles\Odf\Exporter\ExportToFile;
@@ -27,13 +28,13 @@ $data = random_data_complex();
 
 $dataRenderer = new DataRenderer($data, $functions);
 
-$template = __DIR__ . DIRECTORY_SEPARATOR . 'Templates/Report_Complex.odt';
+$template = __DIR__ . DIRECTORY_SEPARATOR . 'templates/Report_Complex.odt';
 
 $odfLoader = new OdfProcessor($template, $baseDir, $fileContainer, $dataRenderer);
 
 $functions->workingDir = $odfLoader->workingDir;
 
-$savesDir = realpath(__DIR__ . DIRECTORY_SEPARATOR . 'Saves');
+$savesDir = realpath(__DIR__ . DIRECTORY_SEPARATOR . 'saves');
 $filename = "Complex Report generated - " . date('Y-m-d H:i:s');
 
 if (file_exists($soffice)) {

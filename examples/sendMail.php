@@ -1,6 +1,6 @@
 <?php
 require __DIR__ . str_replace('/', DIRECTORY_SEPARATOR, '/../vendor/autoload.php');
-include __DIR__ . str_replace('/', DIRECTORY_SEPARATOR, '/Media/Data.php');
+include __DIR__ . str_replace('/', DIRECTORY_SEPARATOR, '/media/data.php');
 
 use Tabula17\Satelles\Odf\Converter\SofficeConverter;
 use Tabula17\Satelles\Odf\Exporter\ExportToMail;
@@ -29,8 +29,8 @@ if(!$cli_options){
 
 /**
  * Example!
- * symfony (GMAIL) => php Examples/SendMail.php -u YOUR_USERNAME -p YOUR_APPKEY -s SENDER@EMAIL -t TO_ADDRESSES_BY_COMMA
- * NETTE => php Examples/SendMail.php -u YOUR_USERNAME -p YOUR_MAILPASS -s SENDER@EMAIL -t TO_ADDRESSES_BY_COMMA -h SMTP_HOST -e ENCRYPTION
+ * symfony (GMAIL) => php examples/sendMail.php -u YOUR_USERNAME -p YOUR_APPKEY -s SENDER@EMAIL -t TO_ADDRESSES_BY_COMMA
+ * NETTE => php examples/sendMail.php -u YOUR_USERNAME -p YOUR_MAILPASS -s SENDER@EMAIL -t TO_ADDRESSES_BY_COMMA -h SMTP_HOST -e ENCRYPTION
  */
 
 
@@ -53,10 +53,10 @@ $functions = new Advanced($baseDir);
 $data = random_data_complex();
 
 $dataRenderer = new DataRenderer($data, $functions);
-$template = __DIR__ . DIRECTORY_SEPARATOR . 'Templates/Report_Complex.odt';
+$template = __DIR__ . DIRECTORY_SEPARATOR . 'templates/Report_Complex.odt';
 $odfLoader = new OdfProcessor($template, $baseDir, $fileContainer, $dataRenderer);
 $functions->workingDir = $odfLoader->workingDir;
-$savesDir = realpath(__DIR__ . DIRECTORY_SEPARATOR . 'Saves');
+$savesDir = realpath(__DIR__ . DIRECTORY_SEPARATOR . 'saves');
 
 $filename = "Sales Order - " . $data['docNumber'] . ".pdf";
 

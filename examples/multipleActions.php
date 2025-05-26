@@ -1,6 +1,6 @@
 <?php
 require __DIR__ . str_replace('/', DIRECTORY_SEPARATOR, '/../vendor/autoload.php');
-include __DIR__ . str_replace('/', DIRECTORY_SEPARATOR, '/Media/Data.php');
+include __DIR__ . str_replace('/', DIRECTORY_SEPARATOR, '/media/data.php');
 
 use Tabula17\Satelles\Odf\Converter\SofficeConverter;
 use Tabula17\Satelles\Odf\Exporter\CupsIPPWrapper;
@@ -32,8 +32,8 @@ $canSendMail = count(array_diff($required_mail_options, array_keys($cli_options)
 $canPrint = count(array_diff($required_printer_options, array_keys($cli_options))) === 0;
 /**
  * EJMPLO DE USO:
- * symfony (GMAIL) => php Examples/MultipleActions.php -u YOUR_USERNAME -p 'YOUR APP PASS KEY' -s SENDER@gmail.com -t TO_ADDRESSES_BY_COMMA
- * NETTE => php Examples/MultipleActions.php -u YOUR_USERNAME -p YOUR_MAILPASS -s SENDER@EMAIL -t TO_ADDRESSES_BY_COMMA -h SMTP_HOST -e ENCRYPTION
+ * symfony (GMAIL) => php examples/multipleActions.php -u YOUR_USERNAME -p 'YOUR APP PASS KEY' -s SENDER@gmail.com -t TO_ADDRESSES_BY_COMMA
+ * NETTE => php examples/multipleActions.php -u YOUR_USERNAME -p YOUR_MAILPASS -s SENDER@EMAIL -t TO_ADDRESSES_BY_COMMA -h SMTP_HOST -e ENCRYPTION
  */
 
 
@@ -44,10 +44,10 @@ $functions = new Advanced($baseDir);
 $data = random_data_complex();
 
 $dataRenderer = new DataRenderer($data, $functions);
-$template = __DIR__ . DIRECTORY_SEPARATOR . 'Templates/Report_Complex.odt';
+$template = __DIR__ . DIRECTORY_SEPARATOR . 'templates/Report_Complex.odt';
 $odfLoader = new OdfProcessor($template, $baseDir, $fileContainer, $dataRenderer);
 $functions->workingDir = $odfLoader->workingDir;
-$savesDir = realpath(__DIR__ . DIRECTORY_SEPARATOR . 'Saves');
+$savesDir = realpath(__DIR__ . DIRECTORY_SEPARATOR . 'saves');
 
 $filename = "Sales Order - " . $data['docNumber'] . ".pdf";
 

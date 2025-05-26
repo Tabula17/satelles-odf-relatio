@@ -197,7 +197,7 @@ class OdfContainer implements OdfContainerInterface
     }
 
     /**
-     * Saves the ODT file by writing all loaded XML parts back into the archive.
+     * saves the ODT file by writing all loaded XML parts back into the archive.
      * @return void
      * @throws XmlProcessException
      */
