@@ -1,5 +1,10 @@
 # XVII: satelles-odf-relatio
-
+<p>
+	<img src="https://img.shields.io/github/license/Tabula17/satelles-odf-relatio?style=default&logo=opensourceinitiative&logoColor=white&color=2141ec" alt="license">
+	<img src="https://img.shields.io/github/last-commit/Tabula17/satelles-odf-relatio?style=default&logo=git&logoColor=white&color=2141ec" alt="last-commit">
+	<img src="https://img.shields.io/github/languages/top/Tabula17/satelles-odf-relatio?style=default&color=2141ec" alt="repo-top-language">
+	<img src="https://img.shields.io/github/languages/count/Tabula17/satelles-odf-relatio?style=default&color=2141ec" alt="repo-language-count">
+</p>
 Una biblioteca PHP para procesar documentos ODF (Open Document Format) con un potente sistema de plantillas y múltiples opciones de exportación.
 
 ## Características
