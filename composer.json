@@ -1,12 +1,33 @@
 {
   "name": "xvii/satelles-odf-relatio",
-  "description": "Procesador de templates en openoffice.",
-  "license":     "MIT",
-  "homepage":    "https://github.com/Tabula17/satelles-odf-relatio",
-  "keywords":    ["reports", "template", "odf", "openoffice", "jodreports"],
-  "authors": [
-    {"name": "Martín Emilio Panizzo"}
+  "description": "A powerful PHP library for processing ODF (OpenDocument Format) templates with dynamic content, multiple export options and format conversion support. Perfect for generating dynamic reports, documents and forms.",
+  "type": "library",
+  "homepage": "https://github.com/Tabula17/satelles-odf-relatio",
+  "keywords": [
+    "odf",
+    "openoffice",
+    "libreoffice",
+    "document-template",
+    "document-generation",
+    "report-generator",
+    "template-engine",
+    "pdf-converter",
+    "document-processor",
+    "office-automation",
+    "mail-merge",
+    "dynamic-documents"
   ],
+  "authors": [
+    {
+      "name": "Martín Emilio Panizzo",
+      "role": "Developer"
+    }
+  ],
+  "support": {
+    "issues": "https://github.com/Tabula17/satelles-odf-relatio/issues",
+    "source": "https://github.com/Tabula17/satelles-odf-relatio"
+  },
+  "version": "1.0.0",
   "extra": {
     "branch-alias": {
       "dev-main": "1.0.x-dev"
@@ -18,7 +39,10 @@
     }
   },
   "repositories": [
-    {"type": "composer", "url": "https://tabula17.repo.repman.io"}
+    {
+      "type": "composer",
+      "url": "https://tabula17.repo.repman.io"
+    }
   ],
   "minimum-stability": "dev",
   "prefer-stable": true,
