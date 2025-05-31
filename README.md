@@ -1,62 +1,142 @@
 # XVII: satelles-odf-relatio
-<p>
-	<img src="https://img.shields.io/github/license/Tabula17/satelles-odf-relatio?style=default&logo=opensourceinitiative&logoColor=white&color=2141ec" alt="license">
-	<img src="https://img.shields.io/github/last-commit/Tabula17/satelles-odf-relatio?style=default&logo=git&logoColor=white&color=2141ec" alt="last-commit">
-	<img src="https://img.shields.io/github/languages/top/Tabula17/satelles-odf-relatio?style=default&color=2141ec" alt="repo-top-language">
-	<img src="https://img.shields.io/github/languages/count/Tabula17/satelles-odf-relatio?style=default&color=2141ec" alt="repo-language-count">
-</p>
 
-Procesador de plantillas ODF (OpenDocument) para PHP, inspirado en JODReports, que permite generar documentos dinámicos a partir de plantillas y datos personalizados.
+Una biblioteca PHP para procesar documentos ODF (Open Document Format) con un potente sistema de plantillas y múltiples opciones de exportación.
 
 ## Características
 
-- Carga y manipulación de archivos ODT.
-- Inserción de datos y generación de reportes.
-- Conversión a PDF usando LibreOffice/soffice.
-- Soporte para imágenes y recursos embebidos.
-- Ejemplos listos para usar.
+- Sistema avanzado de plantillas ODF con soporte para:
+  - Variables simples y anidadas
+  - Bucles
+  - Condiciones (if/else)
+  - Imágenes y SVG dinámicos
+  - Operaciones aritméticas
+  - Funciones personalizables
+- Múltiples formatos de exportación:
+  - ODF nativo
+  - PDF (requiere LibreOffice)
+- Opciones de salida flexibles:
+  - Guardar a disco
+  - Enviar por correo (Symfony Mailer/Nette)
+  - Imprimir (CUPS)
 
 ## Requisitos
 
-- PHP 8.4 o superior
-- Composer
+- PHP 8.3+
+- Extensión ZIP de PHP
 - LibreOffice (opcional, para conversión a PDF)
+- Composer
 
 ## Instalación
 
-1. Clona el repositorio:
-   ```sh
-   git clone https://github.com/Tabula17/satelles-odf-relatio
-   cd satelles-odf-relatio
-   ```
-
-2. Instala las dependencias:
-   ```sh
-   composer install
-   ```
-
-## Ejemplo de uso
-
-Este script genera un reporte de ejmplo y lo guarda en PDF (si tienes LibreOffice instalado):
-
-```sh
-php examples/saveToDisk.php
+```bash
+composer require xvii/satelles-odf-relatio
 ```
 
-Los archivos generados se guardan en el directorio `Examples/Saves`.
+## Uso Básico
 
-Para más ejemplos y explicaciones consulta la sección de [ejemplos](examples/README.md).
+### Crear y Procesar un Documento
 
-Adaptación para uso asincrónico [`orbitalis-odf-exemplar`](https://github.com/Tabula17/orbitalis-odf-exemplar) para un procesamiento más eficiente y moderno.
+```php
+use Tabula17\Satelles\Odf\OdfProcessor;
+use Tabula17\Satelles\Odf\File\OdfContainer;
+use Tabula17\Satelles\Odf\Renderer\DataRenderer;
+use Tabula17\Satelles\Odf\Functions\Advanced;
+use Tabula17\Satelles\Odf\Exporter\ExportToFile;
 
-## Estructura del proyecto
+// Configuración básica
+$zipHandler = new ZipArchive();
+$fileContainer = new OdfContainer($zipHandler);
+$functions = new Advanced('/tmp');
+$data = [
+    'title' => 'Mi Documento',
+    'items' => ['item1', 'item2', 'item3']
+];
 
-- `src/` — Código fuente principal.
-- `Examples/` — Scripts de ejemplo y plantillas.
-- `Examples/Templates/` — Plantillas ODT.
-- `Examples/Media/` — Recursos y datos de ejemplo.
-- `Examples/Saves/` — Reportes generados.
+// Crear el procesador
+$renderer = new DataRenderer($data, $functions);
+$processor = new OdfProcessor(
+    'template.odt',
+    '/tmp',
+    $fileContainer,
+    $renderer
+);
+
+// Procesar y exportar
+$processor->loadFile()
+    ->process($data)
+    ->compile()
+    ->exportTo(new ExportToFile('/output', 'result.odf'))
+    ->cleanUpWorkingDir();
+```
+
+## Sintaxis de Plantillas
+
+### Variables Simples
+```xml
+<text:text-input text:description="odf-tpl-text">${variable}</text:text-input>
+```
+
+### Bucles
+```xml
+<text:text-input text:description="odf-tpl-loop">items#up@table:table-row as item</text:text-input>
+<text:text-input text:description="odf-tpl-text">${item.name}</text:text-input>
+```
+
+### Condiciones
+```xml
+<text:text-input text:description="odf-tpl-if">${total} > 1000#up@table:table-row</text:text-input>
+```
+
+### Imágenes Dinámicas
+```xml
+<draw:frame draw:name="odf-tpl-image">
+    <svg:desc>${image_path}</svg:desc>
+    <draw:image xlink:href=""/>
+</draw:frame>
+```
+
+### Operaciones Aritméticas
+```xml
+<text:text-input text:description="odf-tpl-text">${value1}+${value2}</text:text-input>
+```
+
+## Funciones Personalizadas
+
+```php
+use Tabula17\Satelles\Odf\Functions\Base;
+
+class MyFunctions extends Base {
+    public function customFormat($value, $param) {
+        // Implementación personalizada
+        return $formatted;
+    }
+}
+
+$renderer = new DataRenderer($data, new MyFunctions());
+```
+```xml
+<text:text-input text:description="odf-tpl-text">${variable?customFormat|paramValue}</text:text-input>
+```
+
+## Ejemplos Incluidos
+
+El directorio `examples/` contiene ejemplos completos:
+- `saveToDiskComplex.php`: Procesamiento complejo con guardado a disco
+- `sendMail.php`: Envío por correo electrónico
+- `multipleActions.php`: Múltiples acciones de exportación
+
+## Adaptaciones y Extensiones
+
+### orbitalis-odf-exemplar
+Adaptación para uso asincrónico mediante Swoole: [`orbitalis-odf-exemplar`](https://github.com/Tabula17/orbitalis-odf-exemplar).
+
 
 ## Licencia
 
-Consulta el archivo `LICENSE` para más información.
+MIT License
+
+## Soporte
+
+Para reportar problemas o solicitar nuevas características:
+1. Revisa los issues existentes
+2. Abre un nuevo issue con los detalles del problema o sugerencia
