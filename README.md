@@ -12,7 +12,7 @@ Una biblioteca PHP para procesar documentos ODF (Open Document Format) con un po
 - Sistema avanzado de plantillas ODF con soporte para:
   - Variables simples y anidadas
   - Bucles
-  - Condiciones (if/else)
+  - Condiciones IF
   - Imágenes y SVG dinámicos
   - Operaciones aritméticas
   - Funciones personalizables
@@ -103,6 +103,8 @@ En `as item` se define el alias de la variable que se utilizará para denominar 
 ```
 
 ### Condiciones
+Las condiciones se definen con la etiqueta `odf-tpl-if` y permiten mostrar u ocultar contenido basado en condiciones lógicas.
+La sintaxis es similar a la de las variables, pero se utiliza para evaluar expresiones. Ver el método `evaluateExpression` en la clase `XmlProcessor` para más detalles sobre cómo se evalúan las condiciones.
 ```xml
 <text:text-input text:description="odf-tpl-if">${total} > 1000#up@table:table-row</text:text-input>
 ```
