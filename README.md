@@ -79,8 +79,9 @@ $processor->loadFile()
 Las plantillas pueden editarse directamente en openoffice o libreoffice.
 Para utilizar las variables y estructuras de control, debes agregar etiquetas específicas en el documento ODF. Estas etiquetas se utilizan para identificar dónde se deben insertar los datos dinámicos.
 Es necesario conocer la estructura XML del ODF para agregar las etiquetas correctamente.
-Para agregar estos valores desde la inetrfaz de usuario, utiliza el menú "Insertar" -> "Campo" -> "Otro campo" -> "Variables" o "Campos de texto" -> "Campos de texto personalizados".
-Y agregar en la descrición la etiqueta correspondiente y en el campo el valor de la variable utilizando los siguientes patrones:
+
+Para agregar estos valores desde la inetrfaz de usuario, utiliza el menú "Insertar" -> "Campo" -> "Otro campo" -> "Funciones".
+Agregar en la referencia la etiqueta correspondiente, posar el puntero en donde quiere agergar la etiqueta, accionar el botón "Insertar" y en el agregar el valor de la variable utilizando los siguientes patrones:
 
 ### Variables Simples
 ```xml
@@ -89,10 +90,10 @@ Y agregar en la descrición la etiqueta correspondiente y en el campo el valor d
 
 ### Bucles
 Los bucles se utilizan para iterar sobre colecciones de datos. Se definen con la etiqueta `odf-tpl-loop` y se pueden utilizar dentro de tablas o listas.
-La variable está conformada por el miembro en el set de datos que define el bucle (`item`) seguido de `#up@table:table-row` para indicar que se trata de una fila de tabla ubicada como padre del nodo <text:text-input>. 
+La variable está conformada por el miembro en el set de datos que define el bucle (`item`) seguido de `#up@table:table-row` para indicar que se trata de una fila de tabla ubicada como padre del nodo `<text:text-input />` que contirnr la variable. 
 El miembro anterior al `@` indica el nivel de iteración, mientras que el miembro posterior indica el tipo de elemento XML que se está iterando.
 Por ejemplo si se necesita iterar un elemento en el mismo nivel, se utiliza `#left@text:p` o `#right@text:span` según corresponda. Si es un elemento hijo del contenedor, se utiliza `#down@text:p`.
-`as item` define el nombre de la variable que se utilizará para denominar a las variables hijas dentro del bucle.
+En `as item` se define el alias de la variable que se utilizará para denominar a las variables hijas dentro del bucle.
 
 ```xml
 <text:text-input text:description="odf-tpl-loop">items#up@table:table-row as item</text:text-input>
@@ -144,7 +145,7 @@ Al igual que las imágenes, si el SVG está dentro de un bucle, utiliza:
 ## Funciones Personalizadas
 
 Para crear funciones personalizadas, extiende la clase `Tabula17\Satelles\Odf\Functions\Base` y define tus métodos. Luego, pasa tu clase de funciones al `DataRenderer`. 
-La clase `Base` proporciona un método mágico que llama a funciones `PHP`.
+La clase `Base` proporciona un método mágico que llama a funciones `PHP`. La clase `Advanced` ya incluye funciones para generar códigos QR y de barras.
 
 ```php
 use Tabula17\Satelles\Odf\Functions\Base;
