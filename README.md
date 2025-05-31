@@ -54,7 +54,7 @@ $fileContainer = new OdfContainer($zipHandler);
 $functions = new Advanced('/tmp');
 $data = [
     'title' => 'Mi Documento',
-    'items' => ['item1', 'item2', 'item3']
+    'items' => [ 'name' => 'item1', 'name' => 'item2', 'name' => 'item3']
 ];
 
 // Crear el procesador
@@ -76,12 +76,24 @@ $processor->loadFile()
 
 ## Sintaxis de Plantillas
 
+Las plantillas pueden editarse directamente en openoffice o libreoffice.
+Para utilizar las variables y estructuras de control, debes agregar etiquetas específicas en el documento ODF. Estas etiquetas se utilizan para identificar dónde se deben insertar los datos dinámicos.
+Es necesario conocer la estructura XML del ODF para agregar las etiquetas correctamente.
+Para agregar estos valores desde la inetrfaz de usuario, utiliza el menú "Insertar" -> "Campo" -> "Otro campo" -> "Variables" o "Campos de texto" -> "Campos de texto personalizados".
+Y agregar en la descrición la etiqueta correspondiente y en el campo el valor de la variable utilizando los siguientes patrones:
+
 ### Variables Simples
 ```xml
 <text:text-input text:description="odf-tpl-text">${variable}</text:text-input>
 ```
 
 ### Bucles
+Los bucles se utilizan para iterar sobre colecciones de datos. Se definen con la etiqueta `odf-tpl-loop` y se pueden utilizar dentro de tablas o listas.
+La variable está conformada por el miembro en el set de datos que define el bucle (`item`) seguido de `#up@table:table-row` para indicar que se trata de una fila de tabla ubicada como padre del nodo <text:text-input>. 
+El miembro anterior al `@` indica el nivel de iteración, mientras que el miembro posterior indica el tipo de elemento XML que se está iterando.
+Por ejemplo si se necesita iterar un elemento en el mismo nivel, se utiliza `#left@text:p` o `#right@text:span` según corresponda. Si es un elemento hijo del contenedor, se utiliza `#down@text:p`.
+`as item` define el nombre de la variable que se utilizará para denominar a las variables hijas dentro del bucle.
+
 ```xml
 <text:text-input text:description="odf-tpl-loop">items#up@table:table-row as item</text:text-input>
 <text:text-input text:description="odf-tpl-text">${item.name}</text:text-input>
@@ -93,9 +105,33 @@ $processor->loadFile()
 ```
 
 ### Imágenes Dinámicas
+
+Para insertar imágenes dinámicas se debe agregar una imágen como 'placeholder' en donde irá la generada en el proceso y mediante las propiedades de la misma se agregan las etiquetas y las variables utilizando la siguiente sintaxis:
+
 ```xml
 <draw:frame draw:name="odf-tpl-image">
     <svg:desc>${image_path}</svg:desc>
+    <draw:image xlink:href=""/>
+</draw:frame>
+```
+Si la imágen está dentro de un buclé y se genera de manera diferente en cada iteración, utiliza:
+```xml   
+<draw:frame draw:name="odf-tpl-image-loop">
+   <svg:desc>${image_path}</svg:desc>
+   <draw:image xlink:href=""/>
+</draw:frame>
+```
+Si la imagen es un SVG, utiliza:
+```xml
+<draw:frame draw:name="odf-tpl-svg">
+    <svg:desc>${svg_content}</svg:desc>
+    <draw:image xlink:href=""/>
+</draw:frame>
+```
+Al igual que las imágenes, si el SVG está dentro de un bucle, utiliza:
+```xml
+<draw:frame draw:name="odf-tpl-svg-loop">
+    <svg:desc>${svg_content}</svg:desc>
     <draw:image xlink:href=""/>
 </draw:frame>
 ```
@@ -107,6 +143,9 @@ $processor->loadFile()
 
 ## Funciones Personalizadas
 
+Para crear funciones personalizadas, extiende la clase `Tabula17\Satelles\Odf\Functions\Base` y define tus métodos. Luego, pasa tu clase de funciones al `DataRenderer`. 
+La clase `Base` proporciona un método mágico que llama a funciones `PHP`.
+
 ```php
 use Tabula17\Satelles\Odf\Functions\Base;
 
@@ -116,6 +155,7 @@ class MyFunctions extends Base {
         return $formatted;
     }
 }
+
 
 $renderer = new DataRenderer($data, new MyFunctions());
 ```
@@ -129,6 +169,10 @@ El directorio `examples/` contiene ejemplos completos:
 - `saveToDiskComplex.php`: Procesamiento complejo con guardado a disco
 - `sendMail.php`: Envío por correo electrónico
 - `multipleActions.php`: Múltiples acciones de exportación
+- `printFile.php`: Impresión de documentos
+- `saveToDisk.php`: Guardado básico a disco
+
+Puede ver dentro de `examples/templates/` las plantillas utilizadas en los ejemplos, y dentro de `examples/media/` los datos y recursos necesarios para generar los reportes.
 
 ## Adaptaciones y Extensiones
 
