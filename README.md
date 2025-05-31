@@ -81,9 +81,11 @@ Para utilizar las variables y estructuras de control, debes agregar etiquetas es
 Es necesario conocer la estructura XML del ODF para agregar las etiquetas correctamente.
 
 Para agregar estos valores desde la inetrfaz de usuario, utiliza el menú "Insertar" -> "Campo" -> "Otro campo" -> "Funciones".
-Agregar en la referencia la etiqueta correspondiente, posar el puntero en donde quiere agergar la etiqueta, accionar el botón "Insertar" y en el agregar el valor de la variable utilizando los siguientes patrones:
+Agregar en la referencia la etiqueta correspondiente (ej. `odf-tpl-text`) , posar el puntero en donde quiere agregar la etiqueta, accionar el botón "Insertar" y en el agregar el valor de la variable (ej. `${variable}`). 
 
 ### Variables Simples
+El nombre de la variable (`${variable}`) debe corresponder al nombre del miembro en el set de datos que se está utilizando.
+En el caso de que la variable necesite tener un valor por defecto, se puede utilizar la sintaxis `${variable?defaultValue}`.
 ```xml
 <text:text-input text:description="odf-tpl-text">${variable}</text:text-input>
 ```
