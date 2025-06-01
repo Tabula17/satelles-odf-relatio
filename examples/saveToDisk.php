@@ -45,7 +45,8 @@ if (file_exists($soffice)) {
     trigger_error("No se encontró el binario de libreoffice, no podemos convertir el archivo", E_USER_NOTICE);
 }
 
-$exporter = new ExportToFile($savesDir, $filename, $converter);
+$exporter = new ExportToFile($savesDir, $filename);
+$exporter->converter = $converter; // Set the converter to the exporter
 
 $odfLoader->loadFile()
     ->process($data)

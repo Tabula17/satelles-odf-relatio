@@ -23,7 +23,7 @@ $soffice = SOFFICE_BIN[strtolower(PHP_OS_FAMILY)] ?? SOFFICE_BIN['linux'];
 
 $cli_options = getopt('u:p:s:t:h:e:', ['transport:']);
 $required_options = ['u', 'p', 's', 't'];
-if(!$cli_options){
+if (!$cli_options) {
     throw new Exception("Missing options");
 }
 
@@ -103,7 +103,8 @@ if ($transport === 'symfony') {
 }
 
 
-$exporter = new ExportToMail($mailer, $filename, $converter); // Send with Symfony
+$exporter = new ExportToMail($mailer, $filename); // Send with Symfony
+$exporter->converter = $converter; // Set the converter to the exporter
 
 $odfLoader->loadFile()
     ->process($data)

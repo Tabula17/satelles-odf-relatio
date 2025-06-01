@@ -46,8 +46,9 @@ if (file_exists($soffice)) {
 }
 
 
-$exporter = new ExportToFile($savesDir, $filename . ".pdf", $converter); // Convert to PDF
+$exporter = new ExportToFile($savesDir, $filename . ".pdf"); // Convert to PDF
 //$exporter = new ExportToFile($savesDir, $filename. ".odt"); // Without conversion
+$exporter->converter = $converter; // Set the converter to the exporter
 
 $odfLoader->loadFile()
     ->process($data)

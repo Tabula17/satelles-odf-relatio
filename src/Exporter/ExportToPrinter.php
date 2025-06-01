@@ -3,8 +3,10 @@
 namespace Tabula17\Satelles\Odf\Exporter;
 
 use Exception;
+use Tabula17\Satelles\Odf\ConverterInterface;
 use Tabula17\Satelles\Odf\Exception\ExporterException;
 use Tabula17\Satelles\Odf\ExporterInterface;
+use Tabula17\Satelles\Odf\FunctionsInterface;
 
 /**
  *
@@ -27,6 +29,11 @@ class ExportToPrinter implements ExporterInterface
     }
     public PrintSenderInterface $printer;
 
+    public ?ConverterInterface $converter {
+        set {
+            $this->converter = $value;
+        }
+    }
     /**
      * @param PrintSenderInterface $printer
      * @param string|null $exporterName

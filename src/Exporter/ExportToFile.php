@@ -9,6 +9,7 @@ use Tabula17\Satelles\Odf\Exception\ExporterException;
 use Tabula17\Satelles\Odf\Exception\FileException;
 use Tabula17\Satelles\Odf\Exception\FileNotFoundException;
 use Tabula17\Satelles\Odf\ExporterInterface;
+use Tabula17\Satelles\Odf\FunctionsInterface;
 
 /**
  *
@@ -30,7 +31,12 @@ class ExportToFile implements ExporterInterface
             $this->exporterName = $value;
         }
     }
-    private ?ConverterInterface $converter;
+
+    public ?ConverterInterface $converter {
+        set {
+            $this->converter = $value;
+        }
+    }
     private ?string $filename;
     private string $path;
 
@@ -40,11 +46,10 @@ class ExportToFile implements ExporterInterface
      * @param ConverterInterface|null $converter
      * @param string|null $exporterName
      */
-    public function __construct(string $path, ?string $filename = null, ?ConverterInterface $converter = null, ?string $exporterName = null)
+    public function __construct(string $path, ?string $filename = null, ?string $exporterName = null)
     {
         $this->path = $path;
         $this->filename = $filename;
-        $this->converter = $converter;
         $this->exporterName = $exporterName ?? 'ExportToFile' . uniqid('', false);
     }
 

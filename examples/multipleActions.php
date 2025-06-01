@@ -98,10 +98,12 @@ if ($canSendMail) {
         )), $mail_options['sender'], $to, $mail['subject'], $mail['text'], $mail['html']);
     }
 
-    $sender = new ExportToMail($mailer, $filename, $converter);
+    $sender = new ExportToMail($mailer, $filename);
+    $sender->converter = $converter;
 }
-$exporter = new ExportToFile($savesDir, $filename, $converter);
-if($canPrint){
+$exporter = new ExportToFile($savesDir, $filename);
+$exporter->converter = $converter;
+if ($canPrint) {
     $cups = new CupsIPPWrapper('HP-Photosmart-C4380-series');
     $printer = new ExportToPrinter($cups);
 }
@@ -110,10 +112,10 @@ $odfLoader->loadFile()
     ->process($data)
     ->compile();
 $odfLoader->exportTo($exporter);
-if($canSendMail){
+if ($canSendMail) {
     $odfLoader->exportTo($sender);
 }
-if($canPrint){
+if ($canPrint) {
     $odfLoader->exportTo($printer);
 }
 $odfLoader->cleanUpWorkingDir();

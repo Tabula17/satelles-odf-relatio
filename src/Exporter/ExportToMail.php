@@ -7,6 +7,7 @@ use Tabula17\Satelles\Odf\ConverterInterface;
 use Tabula17\Satelles\Odf\Exception\ConversionException;
 use Tabula17\Satelles\Odf\Exception\ExporterException;
 use Tabula17\Satelles\Odf\ExporterInterface;
+use Tabula17\Satelles\Odf\FunctionsInterface;
 
 /**
  *
@@ -27,20 +28,23 @@ class ExportToMail implements ExporterInterface
             $this->exporterName = $value;
         }
     }
-    private ?ConverterInterface $converter;
     private ?string $filename;
     private MailSenderInterface $mail;
 
+    public ?ConverterInterface $converter {
+        set {
+            $this->converter = $value;
+        }
+    }
     /**
      * @param MailSenderInterface $mail
      * @param string|null $filename
      * @param ConverterInterface|null $converter
      * @param string|null $exporterName
      */
-    public function __construct(MailSenderInterface $mail, ?string $filename = null, ?ConverterInterface $converter = null, ?string $exporterName = null)
+    public function __construct(MailSenderInterface $mail, ?string $filename = null, ?string $exporterName = null)
     {
         $this->filename = $filename;
-        $this->converter = $converter;
         $this->mail = $mail;
         $this->exporterName = $exporterName ?? 'ExportToMail' . uniqid('', false);
     }

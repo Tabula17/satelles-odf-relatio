@@ -11,6 +11,9 @@ interface ExporterInterface
         get;
         set;
     }
+    public ?ConverterInterface $converter {
+        set;
+    }
 
 
     /**
