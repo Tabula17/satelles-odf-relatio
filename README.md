@@ -78,8 +78,8 @@ El método `exportTo` puede ser utilizado para exportar a diferentes formatos, c
 Hasta ese momento, el documento ODF generado se encuentra en el directorio de trabajo temporal especificado.
 Este método se puede encadenar y volver a ejecutar con otros exportadores para realizar operaciones adicionales, como enviar por correo o imprimir.
 La clase `ExportToFile` utilizada en los ejemplos utiliza el método `saveToDisk` para guardar el archivo generado en el disco. 
-A su vez acepta una instancia de una clase que implemente  `ConverterInterface` para la conversión del formato final. 
-En este caso `ConvertToPdf` para convertir el archivo ODF a PDF, si se encuentra instalado LibreOffice en el sistema. 
+Los "exportadores" pueden incluir una instancia de una clase que implemente  `ConverterInterface` para la conversión del formato final. 
+En este caso `ExportToFile` usa `ConvertToPdf` para convertir el archivo ODF a PDF, si es que encuentra instalado LibreOffice en el sistema. 
 Esta clase se encarga de ejecutar el comando `soffice` para realizar la conversión, por lo cual no es recomendada para entornos de alto rendimiento o producción, ya que puede ser lenta y bloquear el proceso.
 Para estos casos se recomienda utilizar un servidor Unoserver, que permite realizar la conversión de manera asíncrona y con mejor rendimiento (ver [`🪐 orbitalis-odf-exemplar`](https://github.com/Tabula17/orbitalis-odf-exemplar).) 
 Al finalizar, se limpia el directorio de trabajo temporal con `cleanUpWorkingDir`.
@@ -212,7 +212,7 @@ Puede ver dentro de `examples/templates/` las plantillas utilizadas en los ejemp
 ## Adaptaciones y Extensiones
 
 ### orbitalis-odf-exemplar
-Adaptación para uso asincrónico mediante Swoole: [`orbitalis-odf-exemplar`](https://github.com/Tabula17/orbitalis-odf-exemplar).
+Adaptación para uso asincrónico mediante Swoole: [`🪐 orbitalis-odf-exemplar`](https://github.com/Tabula17/orbitalis-odf-exemplar).
 
 
 ## Licencia
@@ -224,3 +224,5 @@ MIT License
 Para reportar problemas o solicitar nuevas características:
 1. Revisa los issues existentes
 2. Abre un nuevo issue con los detalles del problema o sugerencia
+
+###### 🌌 Ad astra per codicem
