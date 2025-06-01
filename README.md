@@ -144,30 +144,48 @@ Al igual que las imágenes, si el SVG está dentro de un bucle, utiliza:
 ```
 
 ### Operaciones Aritméticas
+Para realizar operaciones aritméticas básicas dentro de las plantillas, puedes utilizar la sintaxis `${value1 + value2}`.
 ```xml
 <text:text-input text:description="odf-tpl-text">${value1}+${value2}</text:text-input>
 ```
+Estas operaciones son evaluadas mediante la clase `Tabula17\Satelles\Securitas\Evaluator\SafeMathEvaluator` de la librería `xvii/satelles-securitas`.
 
-## Funciones Personalizadas
+### Funciones de formateo y transformación de datos
+La clase `DataRenderer` permite definir funciones personalizadas que pueden ser utilizadas en las plantillas como "transformadores" de los datos pasados a las variables. 
+Estas se definen en la clase de funciones que se pasa al `DataRenderer`. La clase `Base` proporciona un método mágico que llama a funciones `PHP` lo cual permite utilizar funciones nativas de PHP directamente en las plantillas.
+En la sintaxis de la plantilla, se utiliza el símbolo `#` seguido del nombre de la función y sus parámetros separados por `|`. 
+El primer parámetro es el valor de la variable, y los siguientes son los parámetros adicionales que la función pueda requerir.
+Si la función requiere que el parámetro con el valor de la variable NO sea el primero se debe ubicar el término `__VALUE__` en la posición requerida.
 
-Para crear funciones personalizadas, extiende la clase `Tabula17\Satelles\Odf\Functions\Base` y define tus métodos. Luego, pasa tu clase de funciones al `DataRenderer`. 
-La clase `Base` proporciona un método mágico que llama a funciones `PHP`. La clase `Advanced` ya incluye funciones para generar códigos QR y de barras.
+Por ejemplo, para utilizar la función `strtoupper` de PHP, puedes hacer lo siguiente:
+
+```xml
+<text:text-input text:description="odf-tpl-text">${variable#strtoupper}</text:text-input>
+```
+O para formatear un número con dos decimales:
+```xml
+<text:text-input text:description="odf-tpl-text">${variable#number_format|2|,}</text:text-input>
+```
+#### Funciones Personalizadas y/o Avanzadas
+
+Para crear funciones personalizadas, extiende la clase `Tabula17\Satelles\Odf\Functions\Base` o crea una nueva clase que implemente `Tabula17\Satelles\Odf\FunctionsInterface` y define tus métodos. 
+Luego, pasa tu clase de funciones al `DataRenderer`.
+Como ejemplo está la clase `Advanced` que incluye funciones para generar códigos QR y de barras (utilizados en los ejemplos).
 
 ```php
 use Tabula17\Satelles\Odf\Functions\Base;
 
-class MyFunctions extends Base {
+class MyFunctions extends Base { /*o implements FunctionsInterface */
     public function customFormat($value, $param) {
         // Implementación personalizada
         return $formatted;
     }
 }
 
-
 $renderer = new DataRenderer($data, new MyFunctions());
 ```
 ```xml
-<text:text-input text:description="odf-tpl-text">${variable?customFormat|paramValue}</text:text-input>
+<text:text-input text:description="odf-tpl-text">${variable#customFormat|paramValue}</text:text-input>
 ```
 
 ## Ejemplos Incluidos
