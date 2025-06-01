@@ -92,15 +92,17 @@ En el caso de que la variable necesite tener un valor por defecto, se puede util
 
 ### Bucles
 Los bucles se utilizan para iterar sobre colecciones de datos. Se definen con la etiqueta `odf-tpl-loop` y se pueden utilizar dentro de tablas o listas.
-La variable está conformada por el miembro en el set de datos que define el bucle (`item`) seguido de `#up@table:table-row` para indicar que se trata de una fila de tabla ubicada como padre del nodo `<text:text-input />` que contirnr la variable. 
-El miembro anterior al `@` indica el nivel de iteración, mientras que el miembro posterior indica el tipo de elemento XML que se está iterando.
-Por ejemplo si se necesita iterar un elemento en el mismo nivel, se utiliza `#left@text:p` o `#right@text:span` según corresponda. Si es un elemento hijo del contenedor, se utiliza `#down@text:p`.
-En `as item` se define el alias de la variable que se utilizará para denominar a las variables hijas dentro del bucle.
-
 ```xml
 <text:text-input text:description="odf-tpl-loop">items#up@table:table-row as item</text:text-input>
 <text:text-input text:description="odf-tpl-text">${item.name}</text:text-input>
 ```
+La variable está conformada por el miembro en el set de datos que define el bucle (`item` en este caso) seguido del descriptor del elemento que va a repetirse en la iteración. 
+En este ejemplo`#up@table:table-row` repite en la iteración una fila de tabla ubicada como padre del nodo `<text:text-input />` que contiene la variable. 
+El miembro anterior al `@` indíca el nivel de iteración, mientras que el miembro posterior define al elemento XML que se está iterando.
+Por ejemplo si se necesita iterar un elemento en el mismo nivel, se utiliza `#left@text:p` si está posicionado antes o `#right@text:span` si está después. 
+Si es un elemento hijo del contenedor, se utiliza `#down@text:p`.
+En `as item` se define el alias de la variable que se utilizará para denominar a las variables hijas dentro del bucle.
+
 
 ### Condiciones
 Las condiciones se definen con la etiqueta `odf-tpl-if` y permiten mostrar u ocultar contenido basado en condiciones lógicas.
@@ -111,7 +113,7 @@ La sintaxis es similar a la de las variables, pero se utiliza para evaluar expre
 
 ### Imágenes Dinámicas
 
-Para insertar imágenes dinámicas se debe agregar una imágen como 'placeholder' en donde irá la generada en el proceso y mediante las propiedades de la misma se agregan las etiquetas y las variables utilizando la siguiente sintaxis:
+Para insertar imágenes dinámicas se debe agregar una imágen como 'placeholder' en donde irá la generada en el proceso y mediante las propiedades de la misma se agregan las etiquetas (nombre) y las variables (texto alternativo) utilizando la siguiente sintaxis:
 
 ```xml
 <draw:frame draw:name="odf-tpl-image">
