@@ -12,7 +12,7 @@
 
 ### Scripts de ejemplo
 
-> Para todos los scripts es neceasrio tener instalado los paquetes sugeridos en composer.
+> Para todos los scripts es neceasrio tener instalado los paquetes sugeridos en composer y las extensiones de PHP requeridas.
 
 #### [SaveToDisk.php](saveToDisk.php):
 
@@ -26,7 +26,7 @@ php examples/saveToDisk.php
 #### [SaveToDiskComplex.php](saveToDiskComplex.php):
 
 Genera el reporte con base en la plantilla [Report_Complex.odt](templates/Report_Complex.odt) y guarda el resultado en el directorio [Saves](saves).
-Si detecta la instalación de LibreOffice conierte el archivo resultante en PDF.
+Si detecta la instalación de LibreOffice convierte el archivo resultante en PDF.
 Para correr el script ejecutar 
 ```sh
 php examples/saveToDiskComplex.php
