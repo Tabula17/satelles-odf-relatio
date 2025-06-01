@@ -1,4 +1,4 @@
-# XVII: satelles-odf-relatio
+# XVII: 🛰️ satelles-odf-relatio
 <p>
 	<img src="https://img.shields.io/github/license/Tabula17/satelles-odf-relatio?style=default&logo=opensourceinitiative&logoColor=white&color=2141ec" alt="license">
 	<img src="https://img.shields.io/github/last-commit/Tabula17/satelles-odf-relatio?style=default&logo=git&logoColor=white&color=2141ec" alt="last-commit">
@@ -26,7 +26,7 @@ Una biblioteca PHP para procesar documentos ODF (Open Document Format) con un po
 
 ## Requisitos
 
-- PHP 8.3+
+- PHP 8.4+
 - Extensión ZIP de PHP
 - LibreOffice (opcional, para conversión a PDF)
 - Composer
@@ -40,6 +40,8 @@ composer require xvii/satelles-odf-relatio
 ## Uso Básico
 
 ### Crear y Procesar un Documento
+El proceso de creación y procesamiento de un documento ODF es sencillo. 
+A continuación se muestra un ejemplo básico de cómo utilizar la biblioteca para generar un documento a partir de una plantilla ODF.
 
 ```php
 use Tabula17\Satelles\Odf\OdfProcessor;
@@ -73,6 +75,16 @@ $processor->loadFile()
     ->exportTo(new ExportToFile('/output', 'result.odf'))
     ->cleanUpWorkingDir();
 ```
+El método `process` aplica los datos a la plantilla, `compile` genera el documento ODF.
+El método `exportTo` puede ser utilizado para exportar a diferentes formatos, como ODF nativo o PDF, dependiendo de la implementación del exportador.
+Hasta ese momento, el documento ODF generado se encuentra en el directorio de trabajo temporal especificado.
+Este método se puede encadenar y volver a ejecutar con otros exportadores para realizar operaciones adicionales, como enviar por correo o imprimir.
+La clase `ExportToFile` utilizada en los ejemplos utiliza el método `saveToDisk` para guardar el archivo generado en el disco. 
+A su vez acepta una instancia de una clase que implemente  `ConverterInterface` para la conversión del formato final. 
+En este caso `ConvertToPdf` para convertir el archivo ODF a PDF, si se encuentra instalado LibreOffice en el sistema. 
+Esta clase se encarga de ejecutar el comando `soffice` para realizar la conversión, por lo cual no es recomendada para entornos de alto rendimiento o producción, ya que puede ser lenta y bloquear el proceso.
+Para estos casos se recomienda utilizar un servidor Unoserver, que permite realizar la conversión de manera asíncrona y con mejor rendimiento (ver [`🪐 orbitalis-odf-exemplar`](https://github.com/Tabula17/orbitalis-odf-exemplar).) 
+Al finalizar, se limpia el directorio de trabajo temporal con `cleanUpWorkingDir`.
 
 ## Sintaxis de Plantillas
 
@@ -96,7 +108,7 @@ Los bucles se utilizan para iterar sobre colecciones de datos. Se definen con la
 <text:text-input text:description="odf-tpl-loop">items#up@table:table-row as item</text:text-input>
 <text:text-input text:description="odf-tpl-text">${item.name}</text:text-input>
 ```
-La variable está conformada por el miembro en el set de datos que define el bucle (`item` en este caso) seguido del descriptor del elemento que va a repetirse en la iteración. 
+La variable está conformada por el miembro en el set de datos que define el bucle (`items` en este caso) seguido del descriptor del elemento que va a repetirse en la iteración. 
 En este ejemplo`#up@table:table-row` repite en la iteración una fila de tabla ubicada como padre del nodo `<text:text-input />` que contiene la variable. 
 El miembro anterior al `@` indíca el nivel de iteración, mientras que el miembro posterior define al elemento XML que se está iterando.
 Por ejemplo si se necesita iterar un elemento en el mismo nivel, se utiliza `#left@text:p` si está posicionado antes o `#right@text:span` si está después. 
