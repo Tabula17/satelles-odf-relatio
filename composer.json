@@ -60,7 +60,8 @@
     "symfony/mailer": "^7.2",
     "nette/mail": "^4.0",
     "symfony/google-mailer": "^7.2",
-    "josh-gaby/cups-ipp": "^0.6.2"
+    "josh-gaby/cups-ipp": "^0.6.2",
+    "phpunit/phpunit": "^12"
   },
   "suggest": {
     "picqer/php-barcode-generator": "Generate barcodes to use in templates",
