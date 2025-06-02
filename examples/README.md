@@ -40,7 +40,9 @@ Para correr el script ejecutar
 php examples/PrintFile.php --printer PRINTER_NAME
 ```
 Donde `PRINTER_NAME` es el nombre de la impresora a utilizar.
-Debe estar instalado y corriendo el servicio de `CUPS` en el sistema.
+Debe estar instalado y corriendo el servicio de `CUPS` en el sistema local.
+Si no se especifica la impresora, se utiliza la impresora por defecto del sistema.
+Puede conectar a otro servidor CUPS especificando el parámetro `--host HOSTNAME` y el puerto con `--port PORT`.
 
 #### [SendMail.php](sendMail.php):
 

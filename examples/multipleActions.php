@@ -3,11 +3,11 @@ require __DIR__ . str_replace('/', DIRECTORY_SEPARATOR, '/../vendor/autoload.php
 include __DIR__ . str_replace('/', DIRECTORY_SEPARATOR, '/media/data.php');
 
 use Tabula17\Satelles\Odf\Converter\SofficeConverter;
-use Tabula17\Satelles\Odf\Exporter\CupsIPPWrapper;
 use Tabula17\Satelles\Odf\Exporter\ExportToFile;
 use Tabula17\Satelles\Odf\Exporter\ExportToMail;
 use Tabula17\Satelles\Odf\Exporter\ExportToPrinter;
 use Tabula17\Satelles\Odf\Exporter\NetteMailWrapper;
+use Tabula17\Satelles\Odf\Exporter\SatellesCupsIPPWrapper;
 use Tabula17\Satelles\Odf\Exporter\SymfonyMailerWrapper;
 use Tabula17\Satelles\Odf\File\OdfContainer;
 use Tabula17\Satelles\Odf\Functions\Advanced;
@@ -25,7 +25,7 @@ const SOFFICE_BIN = [
 $soffice = SOFFICE_BIN[strtolower(PHP_OS_FAMILY)] ?? SOFFICE_BIN['linux'];
 
 
-$cli_options = getopt('u:p:s:t:h:e:', ['transport:', 'printer:']);
+$cli_options = getopt('u:p:s:t:h:e:', ['transport:', 'printer:', 'host:', 'port:']);
 $required_mail_options = ['u', 'p', 's', 't'];
 $required_printer_options = ['h', 'e'];
 $canSendMail = count(array_diff($required_mail_options, array_keys($cli_options))) === 0;
@@ -104,7 +104,7 @@ if ($canSendMail) {
 $exporter = new ExportToFile($savesDir, $filename);
 $exporter->converter = $converter;
 if ($canPrint) {
-    $cups = new CupsIPPWrapper('HP-Photosmart-C4380-series');
+    $cups = new SatellesCupsIPPWrapper($cli_options['host'] ?? 'localhost', $cli_options['port'] ?? 631, $cli_options['printer'] ?? 'default');
     $printer = new ExportToPrinter($cups);
 }
 

@@ -4,8 +4,58 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "31cf42c2b994067ad378c51eab0805f3",
+    "content-hash": "768c4599e544de23584c4a3cd758e08e",
     "packages": [
+        {
+            "name": "psr/log",
+            "version": "3.0.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/php-fig/log.git",
+                "reference": "f16e1d5863e37f8d8c2a01719f5b34baa2b714d3"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/php-fig/log/zipball/f16e1d5863e37f8d8c2a01719f5b34baa2b714d3",
+                "reference": "f16e1d5863e37f8d8c2a01719f5b34baa2b714d3",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.0.0"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "3.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Psr\\Log\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "PHP-FIG",
+                    "homepage": "https://www.php-fig.org/"
+                }
+            ],
+            "description": "Common interface for logging libraries",
+            "homepage": "https://github.com/php-fig/log",
+            "keywords": [
+                "log",
+                "psr",
+                "psr-3"
+            ],
+            "support": {
+                "source": "https://github.com/php-fig/log/tree/3.0.2"
+            },
+            "time": "2024-09-11T13:17:53+00:00"
+        },
         {
             "name": "xvii/satelles-securitas",
             "version": "dev-main",
@@ -56,6 +106,68 @@
                 "issues": "https://github.com/Tabula17/satelles-securitas/issues"
             },
             "time": "2025-05-19T19:00:46+00:00"
+        },
+        {
+            "name": "xvii/satelles-utilis-proelio",
+            "version": "dev-main",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Tabula17/satelles-utilis-proelio.git",
+                "reference": "fb16c981370b4cad4037dd57f01342f603fa3b3a"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Tabula17/satelles-utilis-proelio/zipball/fb16c981370b4cad4037dd57f01342f603fa3b3a",
+                "reference": "fb16c981370b4cad4037dd57f01342f603fa3b3a",
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://tabula17.repo.repman.io/dists/%package%/%version%/%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
+            },
+            "require": {
+                "php": ">=8.2",
+                "psr/log": "^3.0"
+            },
+            "require-dev": {
+                "php-amqplib/php-amqplib": "^v3.7.3"
+            },
+            "suggest": {
+                "ext-openssl": "Para el uso de la seguridad TLS en las conexiones",
+                "ext-redis": "Para el uso de la cola de tareas REDIS",
+                "ext-swoole": "Para el uso de componentes asincrónicos y de red",
+                "php-amqplib/php-amqplib": "Para el uso de la cola de tareas AMQP"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-main": "1.0.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Tabula17\\Satelles\\Utilis\\": "src/"
+                }
+            },
+            "notification-url": "https://tabula17.repo.repman.io/downloads",
+            "license": [
+                "proprietary"
+            ],
+            "authors": [
+                {
+                    "name": "Martín Panizzo",
+                    "email": "code.tabula17@gmail.com.com"
+                }
+            ],
+            "description": "description",
+            "homepage": "https://github.com/Tabula17/satelles-utilis-proelio",
+            "support": {
+                "source": "https://github.com/Tabula17/satelles-utilis-proelio/tree/main",
+                "issues": "https://github.com/Tabula17/satelles-utilis-proelio/issues"
+            },
+            "time": "2025-06-02T17:49:52+00:00"
         },
         {
             "name": "xvii/satelles-xml-frater",
@@ -2300,56 +2412,6 @@
             "time": "2023-04-04T09:54:51+00:00"
         },
         {
-            "name": "psr/log",
-            "version": "3.0.2",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/php-fig/log.git",
-                "reference": "f16e1d5863e37f8d8c2a01719f5b34baa2b714d3"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/php-fig/log/zipball/f16e1d5863e37f8d8c2a01719f5b34baa2b714d3",
-                "reference": "f16e1d5863e37f8d8c2a01719f5b34baa2b714d3",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=8.0.0"
-            },
-            "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "3.x-dev"
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Psr\\Log\\": "src"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "PHP-FIG",
-                    "homepage": "https://www.php-fig.org/"
-                }
-            ],
-            "description": "Common interface for logging libraries",
-            "homepage": "https://github.com/php-fig/log",
-            "keywords": [
-                "log",
-                "psr",
-                "psr-3"
-            ],
-            "support": {
-                "source": "https://github.com/php-fig/log/tree/3.0.2"
-            },
-            "time": "2024-09-11T13:17:53+00:00"
-        },
-        {
             "name": "ralouphie/getallheaders",
             "version": "3.0.3",
             "source": {
@@ -4401,7 +4463,9 @@
     ],
     "aliases": [],
     "minimum-stability": "dev",
-    "stability-flags": {},
+    "stability-flags": {
+        "xvii/satelles-utilis-proelio": 20
+    },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {

@@ -60,7 +60,7 @@
     "symfony/mailer": "^7.2",
     "nette/mail": "^4.0",
     "symfony/google-mailer": "^7.2",
-    "josh-gaby/cups-ipp": "^0.6.2",
+    "xvii/satelles-utilis-proelio": "^1.0@dev",
     "phpunit/phpunit": "^12"
   },
   "suggest": {
@@ -68,7 +68,7 @@
     "endroid/qr-code": "Generate QRs to use in templates",
     "symfony/mailer": "Send generated reports by email",
     "nette/mail": "Send generated reports by email",
-    "josh-gaby/cups-ipp": "Send generated reports direct to printer",
+    "xvii/satelles-utilis-proelio": "Send generated reports direct to printer",
     "ext-bcmath": "Barcode IMB (Intelligent Mail Barcode) needs bcmath extension",
     "ext-gd": "For JPG and PNG generators, GD or Imagick is required",
     "ext-imagick": "For JPG and PNG generators, GD or Imagick is required"

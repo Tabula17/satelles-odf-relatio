@@ -164,7 +164,8 @@ Estas operaciones son evaluadas mediante la clase `Tabula17\Satelles\Securitas\E
 La clase `DataRenderer` permite definir funciones personalizadas que pueden ser utilizadas en las plantillas como "transformadores" de los datos pasados a las variables. 
 Estas se definen en la clase de funciones que se pasa al `DataRenderer`. La clase `Base` proporciona un método mágico que llama a funciones `PHP` lo cual permite utilizar funciones nativas de PHP directamente en las plantillas.
 En la sintaxis de la plantilla, se utiliza el símbolo `#` seguido del nombre de la función y sus parámetros separados por `|`. 
-El primer parámetro es el valor de la variable, y los siguientes son los parámetros adicionales que la función pueda requerir.
+El primer parámetro pasado automáticamente a la función es el valor de la variable, por lo cual no hay que incluirlo. 
+Los siguientes son los parámetros adicionales que la función pueda requerir.
 Si la función requiere que el parámetro con el valor de la variable NO sea el primero se debe ubicar el término `__VALUE__` en la posición requerida.
 
 Por ejemplo, para utilizar la función `strtoupper` de PHP, puedes hacer lo siguiente:

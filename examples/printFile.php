@@ -2,8 +2,8 @@
 require __DIR__ . str_replace('/', DIRECTORY_SEPARATOR, '/../vendor/autoload.php');
 include __DIR__ . str_replace('/', DIRECTORY_SEPARATOR, '/media/data.php');
 
-use Tabula17\Satelles\Odf\Exporter\CupsIPPWrapper;
 use Tabula17\Satelles\Odf\Exporter\ExportToPrinter;
+use Tabula17\Satelles\Odf\Exporter\SatellesCupsIPPWrapper;
 use Tabula17\Satelles\Odf\File\OdfContainer;
 use Tabula17\Satelles\Odf\Functions\Advanced;
 use Tabula17\Satelles\Odf\OdfProcessor;
@@ -20,7 +20,7 @@ const SOFFICE_BIN = [
 $soffice = SOFFICE_BIN[strtolower(PHP_OS_FAMILY)] ?? SOFFICE_BIN['linux'];
 
 
-$cli_options = getopt('', ['printer:']);
+$cli_options = getopt('', ['printer:', 'host:', 'port:']);
 $required_options = ['printer'];
 if (!$cli_options) {
     throw new RuntimeException("Missing options");
@@ -42,8 +42,7 @@ $odfLoader = new OdfProcessor($template, $baseDir, $fileContainer, $dataRenderer
 $functions->workingDir = $odfLoader->workingDir;
 
 
-
-$cups = new CupsIPPWrapper('HP-Photosmart-C4380-series');
+$cups = new SatellesCupsIPPWrapper($cli_options['host'] ?? 'localhost', $cli_options['port'] ?? 631, $cli_options['printer'] ?? 'default');
 $printer = new ExportToPrinter($cups);
 
 $odfLoader->loadFile()
