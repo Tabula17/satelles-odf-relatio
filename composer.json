@@ -61,7 +61,7 @@
     "nette/mail": "^4.0",
     "symfony/google-mailer": "^7.2",
     "xvii/satelles-utilis-proelio": "^1.0@dev",
-    "phpunit/phpunit": "^12"
+    "phpunit/phpunit": ">=12.5.8"
   },
   "suggest": {
     "picqer/php-barcode-generator": "Generate barcodes to use in templates",
