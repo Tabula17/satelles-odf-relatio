@@ -177,7 +177,7 @@ class OdfProcessor
                     sprintf(FileException::CANT_CREATE, $workingDir)
                 );
             }
-        } catch (ErrorException $e) {
+        } catch (Throwable $e) {
             if (str_contains($e->getMessage(), 'File exists')) {
                 // Manejar la condición de carrera: el directorio ya existe
                 // Puedes intentar generar un nuevo nombre o lanzar una excepción
@@ -227,13 +227,13 @@ class OdfProcessor
             $this->fileIsCompiled = false;
             try {
                 $this->fileContainer->loadFile($odfFile);
-            } catch (\Exception $e) {
+            } catch (Throwable $e) {
                 throw new RuntimeException(sprintf(RuntimeException::FAILED_TO_LOAD, $odfFile) . ': ' . $e->getMessage(), 0, $e);
             }
             $this->fileIsLoaded = true;
 
             return $this;
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             throw new RuntimeException(sprintf(RuntimeException::ACTION_ERROR, 'opening', $odfFile) . ': ' . $e->getMessage(), 0, $e);
         }
     }

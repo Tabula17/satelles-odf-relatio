@@ -9,6 +9,7 @@ namespace Tabula17\Satelles\Odf\File;
 use Exception;
 use Tabula17\Satelles\Odf\Exception\FileException;
 use Tabula17\Satelles\Odf\Exception\RuntimeException;
+use Tabula17\Satelles\Odf\Exception\ValidationException;
 use Tabula17\Satelles\Odf\Exception\XmlProcessException;
 use Tabula17\Satelles\Odf\OdfContainerInterface;
 use Tabula17\Satelles\Odf\XmlMemberPath;
@@ -72,7 +73,7 @@ class OdfContainer implements OdfContainerInterface
      * Loads the ODT file and its XML parts.
      * @param string $file
      * @return void
-     * @throws RuntimeException
+     * @throws XmlProcessException
      */
     public function loadFile(string $file): void
     {
@@ -199,7 +200,7 @@ class OdfContainer implements OdfContainerInterface
     /**
      * saves the ODT file by writing all loaded XML parts back into the archive.
      * @return void
-     * @throws XmlProcessException
+     * @throws XmlProcessException|ValidationException
      */
     public function saveFile(): void
     {
