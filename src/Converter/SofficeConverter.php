@@ -20,33 +20,18 @@ use Tabula17\Satelles\Odf\Exception\RuntimeException;
  */
 class SofficeConverter implements ConverterInterface
 {
-    private string $sofficeBin;
-    private string $format;
-    private ?string $outputDir;
-    /**
-     * @var false|mixed
-     */
-    public mixed $overwrite;
-
-
     /**
      * @param string $format
      * @param string|null $outputDir
-     * @param string $soffice
-     * @param $overwrite
-     */
-    /**
-     * @param string $format
-     * @param string|null $outputDir
-     * @param string $soffice
+     * @param string $sofficeBin
      * @param bool $overwrite
      */
-    public function __construct(string $format = 'pdf', ?string $outputDir = null, string $soffice = 'soffice', bool $overwrite = true)
+    public function __construct(
+        private readonly string $format = 'pdf',
+        private readonly ?string $outputDir = __DIR__,
+        private readonly string $sofficeBin = 'soffice',
+        private readonly bool $overwrite = true)
     {
-        $this->format = $format;
-        $this->outputDir = $outputDir ?? __DIR__;
-        $this->sofficeBin = $soffice;
-        $this->overwrite = $overwrite;
     }
 
     /**

@@ -31,8 +31,8 @@ class OdfProcessor
     public string $workingDir {
         get => $this->workingDir;
     }
-    private OdfContainer $fileContainer;
-    private string $filePath;
+    //private OdfContainer $fileContainer;
+    // private string $filePath;
     private bool $fileIsLoaded = false;
     private bool $fileIsCompiled = false;
     private DataRenderer $renderer;
@@ -50,35 +50,30 @@ class OdfProcessor
      *
      * @throws FileNotFoundException If the ODF file does not exist
      * @throws NonWritableFileException If the base directory is not writable
-     * @throws ValidationException If any parameter is invalid
      * @throws FileException
      */
     public function __construct(
-        string                 $odfFilePath,
-        string                 $baseDir,
-        OdfContainer           $fileContainer,
-        ?DataRenderer          $renderer = null,
-        ?XmlProcessorInterface $xmlProcessor = null
+        private readonly string       $filePath,
+        string                        $baseDir,
+        private readonly OdfContainer $fileContainer,
+        ?DataRenderer                 $renderer = null,
+        ?XmlProcessorInterface        $xmlProcessor = null
     )
     {
-        // Validate ODF file path
-        if (empty($odfFilePath)) {
-            throw new ValidationException(ValidationException::EMPTY_PATH);
+        if (empty(!file_exists($this->filePath))) {
+            throw new FileNotFoundException(sprintf(FileNotFoundException::FILE_NOT_FOUND, $this));
         }
-        if (!file_exists($odfFilePath)) {
-            throw new FileNotFoundException(sprintf(FileNotFoundException::FILE_NOT_FOUND, $odfFilePath));
-        }
-        if (!is_readable($odfFilePath)) {
-            throw new FileException(sprintf(FileException::CANT_READ, $odfFilePath));
+        if (!is_readable($this->filePath)) {
+            throw new FileException(sprintf(FileException::CANT_READ, $this->filePath));
         }
 
         // Validate base directory and set working directory
         $this->setWorkingDirectory($baseDir);
 
         // Set properties
-        $this->filePath = $odfFilePath;
+        //$this->filePath = $odfFilePath;
         $this->renderer = $renderer ?? new DataRenderer(null, null);
-        $this->fileContainer = $fileContainer;
+        //$this->fileContainer = $fileContainer;
         $this->xmlProcessor = $xmlProcessor ?? new XmlProcessor($this->renderer, $this->fileContainer);
     }
 

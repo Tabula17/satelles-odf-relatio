@@ -3,6 +3,7 @@
 namespace Tabula17\Satelles\Odf\Functions;
 
 use Exception;
+use Override;
 use Tabula17\Satelles\Odf\Exception\FunctionRendererException;
 use Tabula17\Satelles\Odf\FunctionsInterface;
 
