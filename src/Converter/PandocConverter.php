@@ -3,8 +3,6 @@ declare(strict_types=1);
 
 namespace Tabula17\Satelles\Odf\Converter;
 
-use Override;
-use Swoole\Coroutine\Channel;
 use Tabula17\Satelles\Odf\ConverterInterface;
 use Tabula17\Satelles\Odf\Exception\ConversionException;
 use Tabula17\Satelles\Odf\Exception\FileException;
@@ -16,37 +14,74 @@ use Swoole\Coroutine;
 use Throwable;
 
 /**
- * Class SofficeConverter
+ * Class PandocConverter
  *
- * Convierte archivos usando LibreOffice en modo headless.
- * Incluye detección automática de la ruta del ejecutable.
+ * Convierte archivos usando Pandoc (universal document converter).
+ *
+ * Características:
+ * - Detección automática de Swoole para ejecución asíncrona
+ * - Timeout configurable para evitar bloqueos
+ * - Validación previa de existencia de Pandoc
+ * - Soporte para múltiples formatos de entrada/salida
+ * - Pool de procesos para mejor rendimiento
+ *
+ * @see https://pandoc.org/ para lista completa de formatos
  */
-class SofficeConverter implements ConverterInterface
+class PandocConverter implements ConverterInterface
 {
     private const int DEFAULT_TIMEOUT = 30;
     private const int MAX_CONCURRENT_CONVERSIONS = 5;
 
-    private static ?Channel $semaphore = null;
-    private static ?string $cachedSofficePath = null;
+    private static ?\Swoole\Coroutine\Channel $semaphore = null;
+    private static ?string $cachedPandocPath = null;
 
     /**
-     * @param string $format Formato de salida (pdf, docx, etc.)
+     * Formatos de entrada comunes (para referencia)
+     */
+    public const INPUT_FORMATS = [
+        'markdown', 'markdown_github', 'markdown_phpextra', 'commonmark',
+        'html', 'html5',
+        'latex', 'tex',
+        'docx', 'odt',
+        'rst', 'textile', 'mediawiki',
+        'json', 'native',
+    ];
+
+    /**
+     * Formatos de salida comunes (para referencia)
+     */
+    public const OUTPUT_FORMATS = [
+        'pdf', 'html', 'html5',
+        'docx', 'odt', 'pptx',
+        'latex', 'beamer',
+        'markdown', 'commonmark', 'gfm',
+        'rst', 'textile', 'mediawiki',
+        'epub', 'epub3',
+        'plain', 'rtf',
+    ];
+
+    /**
+     * @param string $from Formato de entrada (markdown, html, docx, etc.)
+     * @param string $to Formato de salida (pdf, html, docx, etc.)
      * @param string|null $outputDir Directorio de salida
-     * @param string|null $soffice Ruta al binario (si es null, se detecta automáticamente)
+     * @param string|null $pandoc Ruta al binario (si es null, se detecta automáticamente)
      * @param bool $overwrite Sobrescribir archivos existentes
      * @param int $timeout Timeout en segundos para la conversión
+     * @param array $extraOptions Opciones adicionales de pandoc (ej: ['--toc', '--standalone'])
      * @throws ConversionException
      */
     public function __construct(
-        private readonly string $format = 'pdf',
+        private readonly string $from = 'markdown',
+        private readonly string $to = 'pdf',
         private ?string         $outputDir = null,
-        private ?string         $soffice = null,
+        private ?string         $pandoc = null,
         private readonly bool   $overwrite = true,
-        private readonly int    $timeout = self::DEFAULT_TIMEOUT
+        private readonly int    $timeout = self::DEFAULT_TIMEOUT,
+        private readonly array  $extraOptions = []
     )
     {
         $this->outputDir = $outputDir ?? sys_get_temp_dir();
-        $this->soffice = $soffice ?? self::findSofficeBinary();
+        $this->pandoc = $pandoc ?? self::findPandocBinary();
         $this->initializeSemaphore();
     }
 
@@ -56,7 +91,7 @@ class SofficeConverter implements ConverterInterface
     private function initializeSemaphore(): void
     {
         if (self::$semaphore === null && $this->isSwooleAvailable()) {
-            self::$semaphore = new Channel(self::MAX_CONCURRENT_CONVERSIONS);
+            self::$semaphore = new \Swoole\Coroutine\Channel(self::MAX_CONCURRENT_CONVERSIONS);
         }
     }
 
@@ -71,89 +106,86 @@ class SofficeConverter implements ConverterInterface
     }
 
     /**
-     * Encuentra automáticamente la ruta del binario soffice.
+     * Encuentra automáticamente la ruta del binario pandoc.
      *
      * @return string La ruta completa al ejecutable.
-     * @throws ConversionException Si no se puede encontrar soffice.
+     * @throws ConversionException Si no se puede encontrar pandoc.
      */
-    public static function findSofficeBinary(): string
+    public static function findPandocBinary(): string
     {
         // 1. Devolver cache si ya se encontró
-        if (self::$cachedSofficePath !== null) {
-            return self::$cachedSofficePath;
+        if (self::$cachedPandocPath !== null) {
+            return self::$cachedPandocPath;
         }
 
-        // 2. Intentar detectar por sistema operativo
         $os = PHP_OS_FAMILY;
         $candidates = [];
 
         // Comando 'which' o 'where' según SO
         if ($os === 'Windows') {
-            // En Windows, intentar con 'where'
-            exec('where soffice 2>NUL', $output, $returnVar);
+            exec('where pandoc 2>NUL', $output, $returnVar);
             if ($returnVar === 0 && !empty($output[0])) {
-                self::$cachedSofficePath = $output[0];
-                return self::$cachedSofficePath;
+                self::$cachedPandocPath = $output[0];
+                return self::$cachedPandocPath;
             }
 
-            // Rutas comunes en Windows
+            // Rutas comunes en Windows (instalador .msi)
             $candidates = [
-                'C:\Program Files\LibreOffice\program\soffice.exe',
-                'C:\Program Files (x86)\LibreOffice\program\soffice.exe',
-                getenv('LOCALAPPDATA') . '\Programs\LibreOffice\program\soffice.exe',
+                'C:\Program Files\Pandoc\pandoc.exe',
+                'C:\Program Files (x86)\Pandoc\pandoc.exe',
+                getenv('LOCALAPPDATA') . '\Pandoc\pandoc.exe',
             ];
         } elseif ($os === 'Darwin') { // macOS
-            // En macOS, 'which' suele funcionar si está en PATH
-            exec('which soffice 2>/dev/null', $output, $returnVar);
+            exec('which pandoc 2>/dev/null', $output, $returnVar);
             if ($returnVar === 0 && !empty($output[0])) {
-                self::$cachedSofficePath = $output[0];
-                return self::$cachedSofficePath;
+                self::$cachedPandocPath = $output[0];
+                return self::$cachedPandocPath;
             }
 
-            // Ruta estándar en macOS
+            // Rutas comunes en macOS (Homebrew)
             $candidates = [
-                '/Applications/LibreOffice.app/Contents/MacOS/soffice',
-                '/opt/homebrew/bin/soffice', // Apple Silicon
-                '/usr/local/bin/soffice',     // Intel
+                '/opt/homebrew/bin/pandoc',  // Apple Silicon
+                '/usr/local/bin/pandoc',      // Intel
+                '/usr/bin/pandoc',
             ];
         } else { // Linux y otros Unix-like
-            exec('which soffice 2>/dev/null', $output, $returnVar);
+            exec('which pandoc 2>/dev/null', $output, $returnVar);
             if ($returnVar === 0 && !empty($output[0])) {
-                self::$cachedSofficePath = $output[0];
-                return self::$cachedSofficePath;
+                self::$cachedPandocPath = $output[0];
+                return self::$cachedPandocPath;
             }
 
             // Rutas comunes en Linux
             $candidates = [
-                '/usr/bin/soffice',
-                '/usr/local/bin/soffice',
-                '/opt/libreoffice/program/soffice',
-                '/snap/bin/libreoffice',
-                '/usr/lib/libreoffice/program/soffice',
+                '/usr/bin/pandoc',
+                '/usr/local/bin/pandoc',
+                '/opt/pandoc/bin/pandoc',
+                '/snap/bin/pandoc',           // Instalación Snap
             ];
         }
 
         // 3. Verificar las rutas candidatas
         foreach ($candidates as $candidate) {
             if (is_executable($candidate)) {
-                self::$cachedSofficePath = $candidate;
-                return self::$cachedSofficePath;
+                self::$cachedPandocPath = $candidate;
+                return self::$cachedPandocPath;
             }
         }
 
         // 4. Si todo falla, lanzar una excepción clara
         throw new ConversionException(
             sprintf(ConversionException::DEFAULT_MESSAGE,
-                'No se pudo encontrar automáticamente el ejecutable de LibreOffice (soffice). ' .
-                'Por favor, especifica la ruta manualmente en el constructor.'
+                'No se pudo encontrar automáticamente el ejecutable de Pandoc. ' .
+                'Por favor, instala Pandoc (https://pandoc.org/installing.html) ' .
+                'o especifica la ruta manualmente en el constructor.'
             )
         );
     }
 
     /**
-     * Verifica que LibreOffice esté disponible (cacheado)
+     * Verifica que Pandoc esté disponible (cacheado)
      */
-    private function isLibreOfficeAvailable(): bool
+    private function isPandocAvailable(): bool
     {
         static $available = null;
 
@@ -161,7 +193,7 @@ class SofficeConverter implements ConverterInterface
             return $available;
         }
 
-        $command = $this->soffice . ' --version 2>&1';
+        $command = $this->pandoc . ' --version 2>&1';
         $output = [];
         $returnVar = 0;
 
@@ -169,7 +201,7 @@ class SofficeConverter implements ConverterInterface
         $available = $returnVar === 0;
 
         if (!$available) {
-            error_log("LibreOffice no encontrado: " . implode("\n", $output));
+            error_log("Pandoc no encontrado: " . implode("\n", $output));
         }
 
         return $available;
@@ -183,23 +215,22 @@ class SofficeConverter implements ConverterInterface
      * @return string|null The path to the converted file
      * @throws ConversionException
      */
-    #[Override]
     public function convert(string $file, ?string $outputName = null): ?string
     {
         // Validaciones previas
         $this->validateInput($file);
 
-        // Verificar disponibilidad de LibreOffice
-        if (!$this->isLibreOfficeAvailable()) {
+        // Verificar disponibilidad de Pandoc
+        if (!$this->isPandocAvailable()) {
             throw new ConversionException(
-                sprintf(ConversionException::DEFAULT_MESSAGE, 'LibreOffice no está disponible en el sistema')
+                sprintf(ConversionException::DEFAULT_MESSAGE, 'Pandoc no está disponible en el sistema')
             );
         }
 
         // Obtener el nombre base del archivo de salida
-        $baseOutputName = $outputName ?? pathinfo($file, PATHINFO_FILENAME) . '.' . $this->format;
+        $extension = $this->to;
+        $baseOutputName = $outputName ?? pathinfo($file, PATHINFO_FILENAME) . '.' . $extension;
         $generatedFile = $this->outputDir . DIRECTORY_SEPARATOR . $baseOutputName;
-
         // Verificar si ya existe y no sobrescribir
         if (!$this->overwrite && file_exists($generatedFile)) {
             return $generatedFile;
@@ -212,13 +243,61 @@ class SofficeConverter implements ConverterInterface
     }
 
     /**
+     * Convierte contenido de texto directamente (sin archivo)
+     *
+     * @param string $content Contenido a convertir
+     * @param string|null $inputFormat Formato de entrada (si es null, usa $this->from)
+     * @return string Contenido convertido
+     * @throws ConversionException
+     */
+    public function convertString(string $content, ?string $inputFormat = null): string
+    {
+        if (!$this->isPandocAvailable()) {
+            throw new ConversionException('Pandoc no está disponible');
+        }
+
+        $from = $inputFormat ?? $this->from;
+
+        // Crear archivo temporal
+        $tempInput = tempnam($this->outputDir, 'pandoc_in_');
+        file_put_contents($tempInput, $content);
+
+        try {
+            $command = sprintf(
+                '%s -f %s -t %s %s %s',
+                $this->pandoc,
+                escapeshellarg($from),
+                escapeshellarg($this->to),
+                implode(' ', $this->extraOptions),
+                escapeshellarg($tempInput)
+            );
+
+            if ($this->isSwooleAvailable()) {
+                $result = System::exec($command);
+                if ($result['code'] !== 0) {
+                    throw new ConversionException($result['output']);
+                }
+                return $result['output'];
+            }
+
+            exec($command . ' 2>&1', $output, $returnVar);
+            if ($returnVar !== 0) {
+                throw new ConversionException(implode("\n", $output));
+            }
+
+            return implode("\n", $output);
+        } finally {
+            @unlink($tempInput);
+        }
+    }
+
+    /**
      * Convierte de forma síncrona (CLI tradicional)
      * @throws ConversionException
      */
     private function convertSync(string $file, string $outputFile): string
     {
-        $command = $this->buildCommand($file);
-
+        $command = $this->buildCommand($file, $outputFile);
         $output = [];
         $returnVar = 0;
 
@@ -243,15 +322,16 @@ class SofficeConverter implements ConverterInterface
 
     /**
      * Convierte de forma asíncrona (Swoole)
-     * @throws ConversionException
      */
     private function convertAsync(string $file, string $outputFile): string
     {
         // Control de concurrencia
-        self::$semaphore?->push(true, $this->timeout);
+        if (self::$semaphore !== null) {
+            self::$semaphore->push(true, $this->timeout);
+        }
 
         try {
-            $command = $this->buildCommand($file);
+            $command = $this->buildCommand($file, $outputFile);
 
             // Ejecutar comando con timeout
             $result = System::exec($command);
@@ -274,47 +354,14 @@ class SofficeConverter implements ConverterInterface
 
         } finally {
             // Liberar semáforo
-            self::$semaphore?->pop();
+            if (self::$semaphore !== null) {
+                self::$semaphore->pop();
+            }
         }
     }
 
     /**
      * Versión asíncrona que devuelve el ID de la corrutina
-     * para poder hacer wait después si se necesita
-     * // Ejemplo de uso asíncrono con corrutinas
-     * $converter = new SofficeConverter('pdf', '/tmp/output');
-     * $result = null;
-     *
-     * $coroutineId = $converter->convertAsyncWithCoroutine(
-     *      '/path/to/document.odt',
-     *      'output.pdf',
-     *      $result
-     * );
-     *
-     * if ($coroutineId === 0) {
-     *      // Ejecución síncrona (no Swoole)
-     *      echo "Resultado síncrono: $result\n";
-     * } elseif ($coroutineId === false) {
-     *      // Error al crear corrutina
-     *      echo "Error al crear corrutina\n";
-     * } else {
-     *      // Corrutina creada exitosamente
-     *      echo "Conversión en proceso (corrutina ID: $coroutineId)\n";
-     *
-     *      // Hacer otras cosas mientras tanto...
-     *
-     *      // Si necesitas esperar el resultado:
-     *      Coroutine::join([$coroutineId]);
-     *
-     *      if ($result instanceof Throwable) {
-     *          echo "Error: " . $result->getMessage() . "\n";
-     *      } else {
-     *          echo "PDF generado: $result\n";
-     *      }
-     * }
-     *
-     * @return int|false ID de la corrutina o false si falla
-     * @throws ConversionException
      */
     public function convertAsyncWithCoroutine(string $file, ?string $outputName, &$result): int|false
     {
@@ -323,7 +370,8 @@ class SofficeConverter implements ConverterInterface
             return 0; // Indica ejecución síncrona
         }
 
-        $baseOutputName = $outputName ?? pathinfo($file, PATHINFO_FILENAME) . '.' . $this->format;
+        $extension = $this->to;
+        $baseOutputName = $outputName ?? pathinfo($file, PATHINFO_FILENAME) . '.' . $extension;
         $generatedFile = $this->outputDir . DIRECTORY_SEPARATOR . $baseOutputName;
 
         $this->validateInput($file);
@@ -333,7 +381,6 @@ class SofficeConverter implements ConverterInterface
             return 0;
         }
 
-        // Crear corrutina y devolver su ID
         return Coroutine::create(function () use ($file, $generatedFile, &$result) {
             try {
                 $result = $this->convertAsync($file, $generatedFile);
@@ -344,38 +391,7 @@ class SofficeConverter implements ConverterInterface
     }
 
     /**
-     * // Uso:
-     * $channel = $converter->convertWithChannel('/path/to/doc.odt', 'output.pdf');
-     * $response = $channel->pop(); // Espera el resultado
-     * if ($response['success']) {
-     *      echo "PDF: " . $response['result'] . "\n";
-     * }
-     *
-     * @param string $file
-     * @param string|null $outputName
-     * @return Channel
-     */
-    public function convertWithChannel(string $file, ?string $outputName = null): Channel
-    {
-        $channel = new Channel(1);
-        $baseOutputName = $outputName ?? pathinfo($file, PATHINFO_FILENAME) . '.' . $this->format;
-        $generatedFile = $this->outputDir . DIRECTORY_SEPARATOR . $baseOutputName;
-
-        Coroutine::create(function () use ($file, $generatedFile, $channel) {
-            try {
-                $result = $this->convertAsync($file, $generatedFile);
-                $channel->push(['success' => true, 'result' => $result]);
-            } catch (Throwable $e) {
-                $channel->push(['success' => false, 'error' => $e->getMessage()]);
-            }
-        });
-
-        return $channel;
-    }
-
-    /**
      * Valida el archivo de entrada y directorio de salida
-     * @throws ConversionException
      */
     private function validateInput(string $file): void
     {
@@ -417,40 +433,39 @@ class SofficeConverter implements ConverterInterface
     /**
      * Construye el comando de conversión
      */
-    private function buildCommand(string $file): string
+    private function buildCommand(string $inputFile, string $outputFile): string
     {
-        $escapedFile = escapeshellarg($file);
-        $escapedOutput = escapeshellarg($this->outputDir);
+        $escapedInput = escapeshellarg($inputFile);
+        $escapedOutput = escapeshellarg($outputFile);
+
+        $options = $this->extraOptions;
+
+        // Añadir --standalone para formatos que lo necesitan
+        if (in_array($this->to, ['html', 'html5', 'latex', 'beamer']) &&
+            !in_array('--standalone', $options) &&
+            !in_array('-s', $options)) {
+            $options[] = '--standalone';
+        }
 
         return sprintf(
-            '%s --headless --convert-to %s %s --outdir %s',
-            $this->soffice,
-            escapeshellarg($this->format),
-            $escapedFile,
-            $escapedOutput
+            '%s -f %s -t %s %s -o %s %s',
+            $this->pandoc,
+            escapeshellarg($this->from),
+            escapeshellarg($this->to),
+            implode(' ', $options),
+            $escapedOutput,
+            $escapedInput
         );
     }
 
     /**
      * Verifica el archivo de salida y lo devuelve
+     * @throws ConversionException
      */
     private function verifyAndReturnOutput(string $inputFile, string $expectedOutput): string
     {
-        // LibreOffice a veces genera nombres ligeramente diferentes
-        $possibleFiles = [
-            $expectedOutput,
-            $this->outputDir . DIRECTORY_SEPARATOR . pathinfo($inputFile, PATHINFO_FILENAME) . '.' . $this->format,
-            $this->outputDir . DIRECTORY_SEPARATOR . pathinfo($inputFile, PATHINFO_FILENAME) . '.' . strtoupper($this->format),
-        ];
-
-        foreach ($possibleFiles as $file) {
-            if (file_exists($file) && filesize($file) > 0) {
-                // Si el archivo esperado es diferente, renombrar
-                if ($file !== $expectedOutput) {
-                    rename($file, $expectedOutput);
-                }
-                return $expectedOutput;
-            }
+        if (file_exists($expectedOutput) && filesize($expectedOutput) > 0) {
+            return $expectedOutput;
         }
 
         throw new ConversionException(
@@ -459,32 +474,65 @@ class SofficeConverter implements ConverterInterface
     }
 
     /**
-     * Método estático para verificar si LibreOffice está instalado
+     * Método estático para verificar si Pandoc está instalado
      */
-    public static function isInstalled(?string $sofficePath = null): bool
+    public static function isInstalled(?string $pandocPath = null): bool
     {
-        $path = $sofficePath ?? self::findSofficeBinary();
+        try {
+            $path = $pandocPath ?? self::findPandocBinary();
+        } catch (ConversionException) {
+            return false;
+        }
+
         $command = $path . ' --version 2>&1';
         exec($command, $output, $returnVar);
         return $returnVar === 0;
     }
 
     /**
-     * Obtiene la versión de LibreOffice instalada
+     * Obtiene la versión de Pandoc instalada
      */
-    public static function getVersion(?string $sofficePath = null): ?string
+    public static function getVersion(?string $pandocPath = null): ?string
     {
-        $path = $sofficePath ?? self::findSofficeBinary();
+        try {
+            $path = $pandocPath ?? self::findPandocBinary();
+        } catch (ConversionException) {
+            return null;
+        }
+
         $command = $path . ' --version 2>&1';
         exec($command, $output, $returnVar);
 
         if ($returnVar === 0 && !empty($output)) {
-            if (preg_match('/LibreOffice\s+([\d.]+)/i', implode(' ', $output), $matches)) {
+            // Pandoc muestra la versión en la primera línea: "pandoc 3.1.9"
+            if (preg_match('/pandoc\s+([\d.]+)/i', $output[0], $matches)) {
                 return $matches[1];
             }
         }
 
         return null;
+    }
+
+    /**
+     * Lista los formatos de entrada soportados
+     */
+    public static function listInputFormats(?string $pandocPath = null): array
+    {
+        $path = $pandocPath ?? self::findPandocBinary();
+        exec($path . ' --list-input-formats 2>&1', $output, $returnVar);
+
+        return $returnVar === 0 ? $output : [];
+    }
+
+    /**
+     * Lista los formatos de salida soportados
+     */
+    public static function listOutputFormats(?string $pandocPath = null): array
+    {
+        $path = $pandocPath ?? self::findPandocBinary();
+        exec($path . ' --list-output-formats 2>&1', $output, $returnVar);
+
+        return $returnVar === 0 ? $output : [];
     }
 
     /**

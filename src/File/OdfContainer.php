@@ -102,6 +102,7 @@ class OdfContainer implements OdfContainerInterface
 
     /**
      * Gets a specific part (carga lazy)
+     * @throws XmlProcessException
      */
     public function getPart(XmlMemberPath $part): ?XmlPart
     {
@@ -140,6 +141,7 @@ class OdfContainer implements OdfContainerInterface
 
     /**
      * Adds a stream image (optimizado con buffer)
+     * @throws XmlProcessException
      */
     private function addStreamImage(string $imgPath, ?string $name = null): void
     {
@@ -159,6 +161,9 @@ class OdfContainer implements OdfContainerInterface
         $this->isModified = true;
     }
 
+    /**
+     * @throws XmlProcessException
+     */
     public function addImage(string $imgPath, ?string $name = null): void
     {
         $this->addStreamImage($imgPath, $name);
@@ -166,6 +171,7 @@ class OdfContainer implements OdfContainerInterface
 
     /**
      * Adds multiple images (procesamiento batch)
+     * @throws XmlProcessException
      */
     public function addImages(array $imgPaths, ?array $names = null): void
     {
@@ -194,6 +200,7 @@ class OdfContainer implements OdfContainerInterface
 
     /**
      * Saves the file - solo si hubo modificaciones
+     * @throws XmlProcessException|ValidationException
      */
     public function saveFile(): void
     {
