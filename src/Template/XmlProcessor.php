@@ -2,7 +2,9 @@
 
 namespace Tabula17\Satelles\Odf\Template;
 
+use Override;
 use Tabula17\Satelles\Odf\DataRendererInterface;
+use Tabula17\Satelles\Odf\Exception\RuntimeException;
 use Tabula17\Satelles\Odf\Exception\StrictValueConstraintException;
 use Tabula17\Satelles\Odf\OdfContainerInterface;
 use Tabula17\Satelles\Odf\Renderer\DataRenderer;
@@ -24,7 +26,9 @@ class XmlProcessor implements XmlProcessorInterface
         '/left@/' => 'parent::*/preceding-sibling::',
         '/right@/' => 'parent::*/following-sibling::'
     ];
+    #[Override]
     public DataRendererInterface $renderer;
+    #[Override]
     public OdfContainerInterface $fileContainer;
 
     /**
@@ -46,6 +50,7 @@ class XmlProcessor implements XmlProcessorInterface
      * @param TemplateConfig $type The type identifier used to fetch the corresponding template.
      * @return string Returns the name of the template.
      */
+    #[Override]
     public function getTemplateName(TemplateConfig $type): string
     {
         return $type->label(self::TEMPLATE_PREFIX);
@@ -62,10 +67,11 @@ class XmlProcessor implements XmlProcessorInterface
      * @return void
      * @throws StrictValueConstraintException
      */
+    #[Override]
     public function processTemplate(XmlPart $xml, array $data, ?string $alias = null): void
     {
         if ($alias === null) {
-            $this->renderer->allData = $data;
+            $this->renderer->data = $data;
             $this->processIfTemplates($xml, $data);
             $this->processLoopTemplates($xml, $data);
             $this->processTextNodes($xml, $data);
@@ -90,6 +96,10 @@ class XmlProcessor implements XmlProcessorInterface
     private function processTemplatesInLoop(XmlPart $xml, array $data, string $alias): void
     {
         foreach ($data as $values) {
+            if (!is_array($values)) {
+                continue;
+            }
+
             $loopNode = $xml->duplicate();
             $this->processIfTemplates($loopNode, $values);
             $this->processLoopTemplates($loopNode, $values, $alias);
@@ -106,6 +116,7 @@ class XmlProcessor implements XmlProcessorInterface
      * @param XmlPart $xml The XML object containing the templates to process.
      * @param array $data An associative array of data used to evaluate conditions in the templates.
      * @return void
+     * @throws StrictValueConstraintException
      */
     private function processIfTemplates(XmlPart $xml, array $data): void
     {
@@ -211,7 +222,7 @@ class XmlProcessor implements XmlProcessorInterface
      * @param array $values An associative array of values used to update the media nodes.
      * @param string $searchTpl The search template defining the target media nodes to process.
      * @return void
-     * @throws StrictValueConstraintException
+     * @throws StrictValueConstraintException|RuntimeException
      */
     private function processMedia(XmlPart $node, array $values, string $searchTpl): void
     {
@@ -278,13 +289,15 @@ class XmlProcessor implements XmlProcessorInterface
      */
     private function evaluateExpression(string $expression, array $data): bool
     {
-        preg_match_all('/\${.*?}|.(?![^{]*})/', $expression, $calc);
+        //preg_match_all('/\${.*?}|.(?![^{]*})/', $expression, $calc);
+        preg_match_all('/\${[^}]+}|[^${}]+/', $expression, $calc);
         $doValue = function ($value) use ($data) {
             if (is_string($value) && preg_match('/\${(.*)}/', $value) === 1) {
-                $value = $this->renderer->processVariable($value, $data);
-                if (!is_numeric($value)) {
-                    $value = "'$value'";
+                $processedValue = $this->renderer->processVariable($value, $data);
+                if (!is_numeric($processedValue)) {
+                    return "'" . addslashes((string)$processedValue) . "'";
                 }
+                return $processedValue;
             }
             return $value;
         };
@@ -310,26 +323,10 @@ class XmlProcessor implements XmlProcessorInterface
     private function safeEvaluateExpression(array $tokens): bool
     {
         // Remove any empty tokens
-        $tokens = array_values(array_filter($tokens, function($token) {
-            return $token !== '' && $token !== ' ';
-        }));
-
+        $tokens = array_values(array_filter($tokens, static fn($token) => $token !== '' && $token !== ' '));
         // Simple expression with just one token (e.g., a boolean value)
         if (count($tokens) === 1) {
-            $value = $tokens[0];
-            if (is_bool($value)) {
-                return $value;
-            }
-            if (is_string($value)) {
-                $lowerValue = strtolower(trim($value, "'\""));
-                if ($lowerValue === 'true') return true;
-                if ($lowerValue === 'false') return false;
-                if ($lowerValue === '1') return true;
-                if ($lowerValue === '0') return false;
-                if ($lowerValue === '') return false;
-                return (bool)$value;
-            }
-            return (bool)$value;
+            return $this->tokenToBoolean($tokens[0]);
         }
 
         // Handle comparison operators
@@ -338,32 +335,21 @@ class XmlProcessor implements XmlProcessorInterface
             $operator = trim($tokens[1]);
             $right = $this->normalizeValue($tokens[2]);
 
-            switch ($operator) {
-                case '==':
-                case '=':
-                    return $left == $right;
-                case '!=':
-                case '<>':
-                    return $left != $right;
-                case '>':
-                    return $left > $right;
-                case '<':
-                    return $left < $right;
-                case '>=':
-                    return $left >= $right;
-                case '<=':
-                    return $left <= $right;
-                case '&&':
-                case 'and':
-                    return $left && $right;
-                case '||':
-                case 'or':
-                    return $left || $right;
-            }
+            return match ($operator) {
+                '==', '=' => $left == $right,
+                '!=', '<>' => $left != $right,
+                '>' => $left > $right,
+                '<' => $left < $right,
+                '>=', '=>' => $left >= $right,
+                '<=', '=<' => $left <= $right,
+                '&&', 'and' => $left && $right,
+                '||', 'or' => $left || $right,
+                default => false,
+            };
         }
 
         // Handle more complex expressions with logical operators
-        if (count($tokens) > 3) {
+        /*if (count($tokens) > 3) {
             // Look for 'and' or '&&' operators
             $andPos = array_search('and', array_map('strtolower', $tokens));
             if ($andPos === false) {
@@ -387,19 +373,83 @@ class XmlProcessor implements XmlProcessorInterface
                 $rightExpr = array_slice($tokens, $orPos + 1);
                 return $this->safeEvaluateExpression($leftExpr) || $this->safeEvaluateExpression($rightExpr);
             }
+        }*/
+        // Compound expressions
+        return $this->evaluateCompoundExpression($tokens);
+    }
+    /**
+     * Converts a token to boolean.
+     */
+    private function tokenToBoolean(mixed $token): bool
+    {
+        if (is_bool($token)) {
+            return $token;
         }
 
-        // Default fallback - if we can't evaluate, return false
+        if (is_string($token)) {
+            $lowerValue = strtolower(trim($token, "'\""));
+            return match($lowerValue) {
+                'true', '1' => true,
+                'false', '0', '' => false,
+                default => true,
+            };
+        }
+
+        return (bool)$token;
+    }
+    /**
+     * Evaluates a compound expression with logical operators.
+     */
+    private function evaluateCompoundExpression(array $tokens): bool
+    {
+        // Buscar 'and' o '&&'
+        $andPos = $this->findOperatorPosition($tokens, ['and', '&&']);
+        if ($andPos !== null) {
+            $leftExpr = array_slice($tokens, 0, $andPos);
+            $rightExpr = array_slice($tokens, $andPos + 1);
+
+            // Short-circuit evaluation
+            $leftResult = $this->safeEvaluateExpression($leftExpr);
+            if (!$leftResult) {
+                return false;
+            }
+
+            return $this->safeEvaluateExpression($rightExpr);
+        }
+
+        // Buscar 'or' o '||'
+        $orPos = $this->findOperatorPosition($tokens, ['or', '||']);
+        if ($orPos !== null) {
+            $leftExpr = array_slice($tokens, 0, $orPos);
+            $rightExpr = array_slice($tokens, $orPos + 1);
+
+            // Short-circuit evaluation
+            $leftResult = $this->safeEvaluateExpression($leftExpr);
+            if ($leftResult) {
+                return true;
+            }
+
+            return $this->safeEvaluateExpression($rightExpr);
+        }
+
         return false;
+    }
+    /**
+     * Finds the position of a logical operator in tokens.
+     */
+    private function findOperatorPosition(array $tokens, array $operators): ?int
+    {
+        return array_find_key($tokens, fn($token) => is_string($token) && in_array(strtolower($token), $operators, true));
+
     }
 
     /**
-     * Normalizes a value for comparison by removing quotes and converting to appropriate type.
+     * Normalizes a value for comparison by removing quotes and converting to the appropriate type.
      *
      * @param mixed $value The value to normalize
      * @return mixed The normalized value
      */
-    private function normalizeValue($value)
+    private function normalizeValue($value): mixed
     {
         if (is_numeric($value)) {
             return $value + 0; // Convert to int or float
@@ -408,8 +458,8 @@ class XmlProcessor implements XmlProcessorInterface
         if (is_string($value)) {
             // Remove surrounding quotes if present
             $value = trim($value);
-            if ((substr($value, 0, 1) === "'" && substr($value, -1) === "'") || 
-                (substr($value, 0, 1) === '"' && substr($value, -1) === '"')) {
+            if (($value[0] === "'" && str_ends_with($value, "'")) ||
+                ($value[0] === '"' && str_ends_with($value, '"'))) {
                 $value = substr($value, 1, -1);
             }
 

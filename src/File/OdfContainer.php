@@ -1,14 +1,10 @@
 <?php
 
-/**
- * Represents an ODT file with its corresponding XML parts.
- */
+declare(strict_types=1);
 
 namespace Tabula17\Satelles\Odf\File;
 
-use Exception;
 use Tabula17\Satelles\Odf\Exception\FileException;
-use Tabula17\Satelles\Odf\Exception\RuntimeException;
 use Tabula17\Satelles\Odf\Exception\ValidationException;
 use Tabula17\Satelles\Odf\Exception\XmlProcessException;
 use Tabula17\Satelles\Odf\OdfContainerInterface;
@@ -17,223 +13,256 @@ use Tabula17\Satelles\Xml\XmlPart;
 use ZipArchive;
 
 /**
- * Handles ODT file operations including loading, modifying, and saving XML components,
- * as well as adding images and managing the manifest.
+ * OdfContainer - Optimizado para alto rendimiento
+ *
+ * Características:
+ * - Carga lazy de partes XML
+ * - Cache de partes procesadas
+ * - Compatible con Swoole (sin estado global)
  */
 class OdfContainer implements OdfContainerInterface
 {
-    /**
-     * @var ZipArchive
-     */
     private ZipArchive $zip;
-    /**
-     * @var string
-     */
     private string $file;
-    /**
-     * @var bool
-     */
     private bool $zipOpened = false;
-    /**
-     * @var XmlPart[]|null
-     */
-    private ?array $parts = [];
+    private array $parts = [];
 
+    // Cache de contenido para evitar re-procesamiento
+    private array $contentCache = [];
 
-    /**
-     * Constructor for the OdfContainer class.
-     * @param ZipArchive $zipHandler
-     */
+    // Flag para indicar si el archivo fue modificado
+    private bool $isModified = false;
+
     public function __construct(ZipArchive $zipHandler)
     {
         $this->zip = $zipHandler;
     }
 
-    /**
-     * Destructor for the OdfContainer class.
-     */
     public function __destruct()
     {
         if ($this->zipOpened) {
-            // var_export($this->zip);
             $this->zip->close();
+            $this->zipOpened = false;
         }
     }
 
-    /**
-     * Returns the path to the 'Pictures' directory within the ODT file.
-     * @return string
-     */
     public function getPicturesFolder(): string
     {
         return XmlMemberPath::PICTURES->value;
     }
 
     /**
-     * Loads the ODT file and its XML parts.
-     * @param string $file
-     * @return void
-     * @throws XmlProcessException
+     * Loads the ODT file - versión optimizada con carga lazy
      */
     public function loadFile(string $file): void
     {
         $this->file = $file;
-        foreach (XmlMemberPath::cases() as $member) {
-            if ($member->name() === 'pictures' || $member->name() === 'settings') {
-                continue;
-            }
-            $this->loadPart($member);
-        }
+        $this->parts = [];
+        $this->contentCache = [];
+        $this->isModified = false;
+
+        // Cargar solo partes esenciales bajo demanda
+        // Las demás se cargarán cuando se necesiten
     }
 
     /**
-     * Loads a specific part of the ODT file based on the provided XmlMemberPath.
-     * @param XmlMemberPath $part
-     * @return void
-     * @throws XmlProcessException
+     * Loads a specific part (con cache)
      */
     public function loadPart(XmlMemberPath $part): void
     {
-        if ($part->name() === 'pictures') {
+        if ($part === XmlMemberPath::PICTURES) {
             return;
         }
+
+        $partName = $part->name();
+
+        // Verificar cache primero
+        if (isset($this->parts[$partName])) {
+            return;
+        }
+
         $this->ensureZipOpened();
         $path = $part->value;
-        if (($xml = $this->zip->getFromName($path)) === false) {
-            throw new XmlProcessException(sprintf(XmlProcessException::EMPTY_PARSE_ERROR, $path));
+
+        // Leer contenido una vez y cachear
+        if (!isset($this->contentCache[$path])) {
+            $content = $this->zip->getFromName($path);
+            if ($content === false) {
+                throw new XmlProcessException(sprintf(XmlProcessException::EMPTY_PARSE_ERROR, $path));
+            }
+            $this->contentCache[$path] = $content;
         }
-        // $partName = $part->name() . 'Xml';
-        // $this->$partName = new XmlPart($xml);
+
         try {
-            $xml = new XmlPart($xml);
-        } catch (Exception $e) {
+            $this->parts[$partName] = new XmlPart($this->contentCache[$path]);
+        } catch (\Exception $e) {
             throw new XmlProcessException(sprintf(XmlProcessException::FAILED_TO_PARSE_XML, $path), 0, $e);
         }
-        $this->parts[$part->name()] = $xml;
     }
 
     /**
-     * Retrieves a specific part of the ODT file based on the provided XmlMemberPath.
-     * @param XmlMemberPath $part
-     * @return XmlPart|null
+     * Gets a specific part (carga lazy)
      */
     public function getPart(XmlMemberPath $part): ?XmlPart
     {
-        if ($part->name() === 'pictures') {
+        if ($part === XmlMemberPath::PICTURES) {
             return null;
         }
-        return $this->parts[$part->name()];
+
+        $partName = $part->name();
+
+        // Carga lazy si no está en memoria
+        if (!isset($this->parts[$partName])) {
+            $this->loadPart($part);
+        }
+
+        return $this->parts[$partName] ?? null;
     }
 
     /**
-     * Registers a file in the ODT manifest.
-     * @param string $fileName
-     * @param $mime
-     * @return void
+     * Registers a file in the manifest (batch processing)
      */
-    public function registerFileInManifest(string $fileName, $mime): void
+    public function registerFileInManifest(string $fileName, string|null $mime): void
     {
-        if ($this->getPart(XmlMemberPath::MANIFEST) !== null) {
-            $this->getPart(XmlMemberPath::MANIFEST)->addChild(
-                'manifest:file-entry manifest:full-path="' . XmlMemberPath::PICTURES->value . $fileName . '" manifest:media-type="' . $mime . '"'
+        $manifest = $this->getPart(XmlMemberPath::MANIFEST);
+        if ($manifest !== null) {
+            $manifest->addChild(
+                sprintf(
+                    'manifest:file-entry manifest:full-path="%s%s" manifest:media-type="%s"',
+                    XmlMemberPath::PICTURES->value,
+                    $fileName,
+                    $mime
+                )
             );
+            $this->isModified = true;
         }
     }
 
     /**
-     * Adds an image file to the ODT file by reading it as a stream and including it in the 'Pictures' directory inside the archive.
-     * @param string $imgPath
-     * @param string|null $name
-     * @return void
-     * @throws XmlProcessException
+     * Adds a stream image (optimizado con buffer)
      */
     private function addStreamImage(string $imgPath, ?string $name = null): void
     {
         $this->ensureZipOpened();
-        $stream = fopen($imgPath, 'rb');
         $fileName = $name ?? basename($imgPath);
-        $content = stream_get_contents($stream);
+
+        // Usar file_get_contents es más rápido que fopen/fread para archivos pequeños
+        $content = @file_get_contents($imgPath);
         if ($content === false) {
             throw new XmlProcessException(sprintf(FileException::CANT_LOAD_STREAM, $imgPath));
         }
+
         $this->zip->addFromString(
             XmlMemberPath::PICTURES->value . $fileName,
             $content
         );
-        fclose($stream);
+        $this->isModified = true;
     }
 
-    /**
-     * Adds an image file to the ODT file by including it in the 'Pictures' directory inside the archive.
-     *
-     * @param string $imgPath The path to the image file that should be added.
-     * @param string|null $name An optional name for the image file within the archive.
-     *                          If not provided, the basename of the $imgPath will be used.
-     * @return void Returns the current instance for method chaining.
-     * @throws XmlProcessException
-     */
     public function addImage(string $imgPath, ?string $name = null): void
     {
         $this->addStreamImage($imgPath, $name);
     }
 
     /**
-     * Adds multiple image files to the ODT file by including them in the 'Pictures' directory inside the archive.
-     *
-     * @param array $imgPaths An array of paths to the image files that should be added.
-     * @param array|null $name An optional array of names for the image files within the archive.
-     *                          If not provided, the basename of each $imgPath will be used.
-     * @return void Returns the current instance for method chaining.
-     * @throws XmlProcessException If the ODT file cannot be opened.
+     * Adds multiple images (procesamiento batch)
      */
-    public function addImages(array $imgPaths, ?array $name = null): void
+    public function addImages(array $imgPaths, ?array $names = null): void
     {
-
-        foreach ($imgPaths as $key => $imgPath) {
-            $fileName = $name[$key] ?? basename($imgPath);
-            $this->addStreamImage($imgPath, $fileName);
+        if (empty($imgPaths)) {
+            return;
         }
 
+        $this->ensureZipOpened();
 
+        foreach ($imgPaths as $key => $imgPath) {
+            $fileName = $names[$key] ?? basename($imgPath);
+
+            $content = @file_get_contents($imgPath);
+            if ($content === false) {
+                continue; // Skip files that can't be read
+            }
+
+            $this->zip->addFromString(
+                XmlMemberPath::PICTURES->value . $fileName,
+                $content
+            );
+        }
+
+        $this->isModified = true;
     }
 
     /**
-     * saves the ODT file by writing all loaded XML parts back into the archive.
-     * @return void
-     * @throws XmlProcessException|ValidationException
+     * Saves the file - solo si hubo modificaciones
      */
     public function saveFile(): void
     {
         if (empty($this->file)) {
             throw new XmlProcessException(XmlProcessException::XML_NOT_LOADED);
         }
+
+        if (!$this->isModified && empty($this->parts)) {
+            return; // Nada que guardar
+        }
+
         $this->ensureZipOpened();
+
         try {
             foreach ($this->parts as $name => $part) {
+                $memberPath = XmlMemberPath::fromName($name);
                 $this->zip->addFromString(
-                    XmlMemberPath::fromName($name),
+                    $memberPath,
                     $part->asXml()
                 );
             }
         } finally {
             $this->zip->close();
             $this->zipOpened = false;
+            $this->isModified = false;
         }
     }
 
     /**
-     * Ensures that the ZIP archive is opened before performing any operations on it.
-     * @return void
-     * @throws XmlProcessException
+     * Ensures ZIP is opened (con reintento para concurrencia)
      */
     private function ensureZipOpened(): void
     {
-        if (!$this->zipOpened) {
-            if ($this->zip->open($this->file) !== true) {
-                throw new XmlProcessException(sprintf(XmlProcessException::FAILED_TO_OPEN_FILE, $this->file));
-            }
-            $this->zipOpened = true;
+        if ($this->zipOpened) {
+            return;
         }
+
+        $maxRetries = 3;
+        $retry = 0;
+
+        while ($retry < $maxRetries) {
+            $result = $this->zip->open($this->file);
+            if ($result === true) {
+                $this->zipOpened = true;
+                return;
+            }
+
+            $retry++;
+            if ($retry < $maxRetries) {
+                usleep(10000 * $retry); // 10ms, 20ms, 30ms
+            }
+        }
+
+        throw new XmlProcessException(sprintf(XmlProcessException::FAILED_TO_OPEN_FILE, $this->file));
     }
 
+    /**
+     * Limpia el cache de contenido (útil en workers de larga duración)
+     */
+    public function clearCache(): void
+    {
+        $this->contentCache = [];
+    }
+
+    /**
+     * Verifica si el archivo fue modificado
+     */
+    public function isModified(): bool
+    {
+        return $this->isModified;
+    }
 }

@@ -42,7 +42,7 @@ interface  OdfContainerInterface
      * @param string $fileName
      * @param $mime
      */
-    public function registerFileInManifest(string $fileName, $mime);
+    public function registerFileInManifest(string $fileName, ?string $mime);
 
     /**
      * Adds an image file to the ODT file by including it in the 'Pictures' directory inside the archive.
@@ -58,11 +58,11 @@ interface  OdfContainerInterface
      * Adds multiple image files to the ODT file by including them in the 'Pictures' directory inside the archive.
      *
      * @param array $imgPaths An array of paths to the image files that should be added.
-     * @param array|null $name An optional array of names for the image files within the archive.
+     * @param array|null $names An optional array of names for the image files within the archive.
      *                          If not provided, the basename of each $imgPath will be used.
      * @throws RuntimeException If the ODT file cannot be opened.
      */
-    public function addImages(array $imgPaths, ?array $name = null);
+    public function addImages(array $imgPaths, ?array $names = null);
 
     public function saveFile();
 }

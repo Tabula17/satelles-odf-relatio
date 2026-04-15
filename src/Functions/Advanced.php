@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tabula17\Satelles\Odf\Functions;
 
+use Override;
 use Endroid\QrCode\Color\Color;
 use Endroid\QrCode\Encoding\Encoding;
 use Endroid\QrCode\ErrorCorrectionLevel;
@@ -49,17 +52,18 @@ use Picqer\Barcode\Types\TypeUpcA;
 use Picqer\Barcode\Types\TypeUpcE;
 use Picqer\Barcode\Types\TypeUpcExtension2;
 use Picqer\Barcode\Types\TypeUpcExtension5;
+use Throwable;
 
 /**
- * Advanced class for generating barcodes and QR codes.
+ * Advanced class for generating barcodes and QR codes in ODF templates.
  */
 class Advanced extends Base
 {
+
     /**
      * The mapping of barcode generators.
-     * @var array|string[]
      */
-    private array $mapBarcodes = [
+    private const array BARCODE_TYPES = [
         'codabar' => TypeCodabar::class,
         'code11' => TypeCode11::class,
         'code128' => TypeCode128::class,
@@ -77,7 +81,6 @@ class Advanced extends Base
         'eanupcbase' => TypeEanUpcBase::class,
         'itf14' => TypeITF14::class,
         'intelligentmailbarcode' => TypeIntelligentMailBarcode::class,
-        'interface' => TypeInterface::class,
         'interleaved25' => TypeInterleaved25::class,
         'interleaved25checksum' => TypeInterleaved25Checksum::class,
         'kix' => TypeKix::class,
@@ -97,93 +100,129 @@ class Advanced extends Base
         'upcextension2' => TypeUpcExtension2::class,
         'upcextension5' => TypeUpcExtension5::class,
     ];
+
     /**
      * The mapping of output formats to barcode renderers.
-     * @var array|string[]
      */
-    private array $mapBarcodeRenderers = [
+    private const array BARCODE_RENDERERS = [
         'png' => PngRenderer::class,
         'svg' => SvgRenderer::class,
         'jpg' => JpgRenderer::class,
         'jpeg' => JpgRenderer::class,
     ];
+
     /**
      * The mapping of output formats to QR code renderers.
-     * @var array|string[]
      */
-    private array $mapQRCodeRenderers = [
+    private const array QRCODE_RENDERERS = [
         'png' => PngWriter::class,
         'svg' => SvgWriter::class
     ];
-    /**
-     * The working directory where barcodes and QR codes will be saved.
-     * @var string|null
-     */
-    public ?string $workingDir {
-        /**
-         * @return string
-         */
-        get {
-            return $this->workingDir;
-        }
-        /**
-         * @return void
-         */
-        set {
-            $this->workingDir = $value;
-        }
-    }
 
     /**
-     * @param string|null $workingDir
+     * @param string|null $workingDir Working directory for generated files
      */
     public function __construct(?string $workingDir = null)
     {
-        $this->workingDir = $workingDir ?? sys_get_temp_dir();
+        //$this->workingDir = $workingDir ?? sys_get_temp_dir();
+        parent::__construct($workingDir ?? sys_get_temp_dir());
     }
 
     /**
      * Generates a barcode based on the provided parameters and saves it to a file.
      *
-     * @param string $value The value to be encoded into the barcode.
-     * @param string $type The type of barcode to generate (e.g., 'code128', 'qr').
-     * @param float $width The width of the barcode.
-     * @param float $height The height of the barcode.
-     * @param string $outputFormat The format to render the barcode (e.g., 'png', 'svg').
-     * @param string|null $fileName
-     * @return string|null Returns the full file name of the saved barcode if successful, or null if an error occurs.
+     * @param string $value The value to be encoded into the barcode
+     * @param string $type The type of barcode to generate (e.g., 'code128', 'qr')
+     * @param float $width The width of the barcode in pixels
+     * @param float $height The height of the barcode in pixels
+     * @param string $outputFormat The format to render the barcode (e.g., 'png', 'svg', 'jpg')
+     * @param string|null $fileName Optional custom file name (without extension)
+     * @return string|null Returns the full file path of the saved barcode if successful, or null if an error occurs
      */
-    public function barcode(string $value, string $type, float $width, float $height, string $outputFormat, ?string $fileName = null): ?string
-    {
-        // $barcode = new Barcode($value);
-        if (array_key_exists(strtolower($type), $this->mapBarcodes) && array_key_exists(strtolower($outputFormat), $this->mapBarcodeRenderers)) {
-            $fullFileName = $this->workingDir . '/' . basename($fileName ?? uniqid('', true), strtolower($outputFormat)) . '.' . strtolower($outputFormat);
+    public function barcode(
+        string $value,
+        string $type,
+        float $width,
+        float $height,
+        string $outputFormat,
+        ?string $fileName = null
+    ): ?string {
+        $typeLower = strtolower($type);
+        $formatLower = strtolower($outputFormat);
 
-            $barcode = new $this->mapBarcodes[strtolower($type)]()->getBarcode($value);
-            $renderer = new $this->mapBarcodeRenderers[strtolower($outputFormat)]();
-            if (file_put_contents($fullFileName, $renderer->render($barcode, $width, $height))) {
+        // Validar que el tipo de código de barras y el formato sean soportados
+        if (!isset(self::BARCODE_TYPES[$typeLower])) {
+            throw new \InvalidArgumentException("Unsupported barcode type: {$type}");
+        }
+
+        if (!isset(self::BARCODE_RENDERERS[$formatLower])) {
+            throw new \InvalidArgumentException("Unsupported output format: {$outputFormat}");
+        }
+
+        try {
+            // Generar nombre de archivo único si no se proporciona
+            $baseFileName = $fileName ?? uniqid('barcode_', true);
+            $fullFileName = $this->workingDir . '/' . $baseFileName . '.' . $formatLower;
+
+            // Asegurar que el directorio existe
+            $this->ensureDirectoryExists(dirname($fullFileName));
+
+            // Generar el código de barras
+            $barcodeType = self::BARCODE_TYPES[$typeLower];
+            $barcode = new $barcodeType()->getBarcode($value);
+
+            // Renderizar y guardar
+            $rendererClass = self::BARCODE_RENDERERS[$formatLower];
+            $renderer = new $rendererClass();
+            $rendered = $renderer->render($barcode, $width, $height);
+
+            if (file_put_contents($fullFileName, $rendered) !== false) {
                 return $fullFileName;
             }
+
+            return null;
+        } catch (Throwable $e) {
+            // Log del error si es necesario
+            error_log("Barcode generation failed: " . $e->getMessage());
+            return null;
         }
-        return null;
     }
 
     /**
      * Generates a QR code and saves it to a file.
      *
-     * @param string $value The value or data to be encoded in the QR code.
-     * @param int $size The size of the QR code in pixels.
-     * @param string $outputFormat The file format for the generated QR code (e.g., png, jpg).
-     * @param string|null $label Optional label text to include below the QR code.
-     * @param string|null $logo Optional file path for a logo to overlay in the QR code.
-     * @param string|null $fileName Optional name for the output file. If not provided, a unique name will be generated.
-     * @return string|null The full file path of the generated QR code, or null if the output format is not supported.
+     * @param string $value The value or data to be encoded in the QR code
+     * @param int $size The size of the QR code in pixels
+     * @param string $outputFormat The file format for the generated QR code (png, svg)
+     * @param string|null $label Optional label text to include below the QR code
+     * @param string|null $logo Optional file path for a logo to overlay in the QR code
+     * @param string|null $fileName Optional custom file name (without extension)
+     * @return string|null The full file path of the generated QR code, or null if the output format is not supported
      */
-    public function qrcode(string $value, int $size, string $outputFormat, ?string $label = null, ?string $logo = null, ?string $fileName = null): ?string
-    {
-        if (array_key_exists(strtolower($outputFormat), $this->mapQRCodeRenderers)) {
-            $fullFileName = $this->workingDir . '/' . basename($fileName ?? uniqid('', true), strtolower($outputFormat)) . '.' . strtolower($outputFormat);
-            $args = [];
+    public function qrcode(
+        string $value,
+        int $size,
+        string $outputFormat,
+        ?string $label = null,
+        ?string $logo = null,
+        ?string $fileName = null
+    ): ?string {
+        $formatLower = strtolower($outputFormat);
+
+        // Validar que el formato sea soportado
+        if (!isset(self::QRCODE_RENDERERS[$formatLower])) {
+            throw new \InvalidArgumentException("Unsupported QR code output format: {$outputFormat}");
+        }
+
+        try {
+            // Generar nombre de archivo único si no se proporciona
+            $baseFileName = $fileName ?? uniqid('qrcode_', true);
+            $fullFileName = $this->workingDir . '/' . $baseFileName . '.' . $formatLower;
+
+            // Asegurar que el directorio existe
+            $this->ensureDirectoryExists(dirname($fullFileName));
+
+            // Configurar el QR code
             $qrCode = new QrCode(
                 data: $value,
                 encoding: new Encoding('UTF-8'),
@@ -191,29 +230,74 @@ class Advanced extends Base
                 size: $size,
                 margin: 10
             );
-            $args[] = $qrCode;
-            if ($logo) {
-                $logo = new Logo(
-                    path: $logo
-                );
-                $args[] = $logo;
-            } else {
-                $args[] = null;
-            }
-            if ($label) {
 
-                $label = new Label(
+            // Preparar argumentos para el writer
+            $writerArgs = [$qrCode];
+
+            // Añadir logo si se proporciona
+            if ($logo && file_exists($logo)) {
+                $writerArgs[] = new Logo(path: $logo);
+            } else {
+                $writerArgs[] = null;
+            }
+
+            // Añadir label si se proporciona
+            if ($label) {
+                $writerArgs[] = new Label(
                     text: $label,
                     textColor: new Color(255, 0, 0)
                 );
-                $args[] = $label;
             }
 
-            $writer = new $this->mapQRCodeRenderers[strtolower($outputFormat)]();
-            $file = $writer->write(...$args);
-            $file->saveToFile($fullFileName);
+            // Generar y guardar
+            $writerClass = self::QRCODE_RENDERERS[$formatLower];
+            $writer = new $writerClass();
+            $result = $writer->write(...$writerArgs);
+            $result->saveToFile($fullFileName);
+
             return $fullFileName;
+        } catch (Throwable $e) {
+            // Log del error si es necesario
+            error_log("QR code generation failed: " . $e->getMessage());
+            return null;
         }
-        return null;
+    }
+
+    /**
+     * Ensures that a directory exists, creating it if necessary
+     *
+     * @param string $directory Directory path
+     * @return void
+     * @throws \RuntimeException If directory cannot be created
+     */
+    private function ensureDirectoryExists(string $directory): void
+    {
+        if (!is_dir($directory) && !mkdir($directory, 0o755, true) && !is_dir($directory)) {
+            throw new \RuntimeException("Cannot create directory: {$directory}");
+        }
+    }
+
+    /**
+     * Gets the current working directory
+     *
+     * @return string|null
+     * @deprecated Use the $workingDir property directly
+     */
+    public function getWorkingDir(): ?string
+    {
+        return $this->workingDir;
+    }
+
+    /**
+     * Sets the working directory
+     *
+     * @param string|null $workingDir
+     * @return self
+     * @deprecated Use the $workingDir property directly
+     */
+    public function setWorkingDir(?string $workingDir): self
+    {
+        $this->workingDir = $workingDir;
+        return $this;
     }
 }

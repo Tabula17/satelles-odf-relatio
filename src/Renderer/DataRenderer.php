@@ -1,12 +1,17 @@
 <?php
+declare(strict_types=1);
 
 namespace Tabula17\Satelles\Odf\Renderer;
 
+use Override;
+use ReflectionClass;
+use ReflectionFunction;
 use Tabula17\Satelles\Odf\DataRendererInterface;
 use Tabula17\Satelles\Odf\Exception\StrictValueConstraintException;
 use Tabula17\Satelles\Odf\Functions\Base;
 use Tabula17\Satelles\Odf\FunctionsInterface;
 use Tabula17\Satelles\Securitas\Evaluator\SafeMathEvaluator;
+use Throwable;
 
 /**
  * Class DataRenderer
@@ -20,24 +25,18 @@ class DataRenderer implements DataRendererInterface
     private const string ARITHMETIC_PATTERN = '/(?<!")[+\-*\/](?!")/';
 
     public FunctionsInterface $functions {
-        set {
-            $this->functions = $value;
-        }
         get {
             return $this->functions;
         }
-    }
-    private string $arithmeticRegEx = self::ARITHMETIC_PATTERN;
-    public bool $strictMode {
-        set {
-            $this->strictMode = $value;
+        set(FunctionsInterface $functions) {
+            $this->functions = $functions;
+            $this->argumentsTypes = $this->getMethodArgumentTypes($functions);
         }
     }
-    public ?array $allData {
-        set {
-            $this->allData = $value;
-        }
-    }
+    private array $argumentsTypes = [];
+    //private string $arithmeticRegEx = self::ARITHMETIC_PATTERN;
+    public bool $strictMode;
+    public ?array $data;
     private SafeMathEvaluator $safeMathEval;
 
 
@@ -52,10 +51,29 @@ class DataRenderer implements DataRendererInterface
         bool                $strictMode = false
     )
     {
-        $this->allData = $data;
+        $this->data = $data;
         $this->functions = $functions ?? new Base();
         $this->strictMode = $strictMode;
         $this->safeMathEval = new SafeMathEvaluator();
+    }
+
+    private function getMethodArgumentTypes($objectOrClass): array
+    {
+        $reflection = new ReflectionClass($objectOrClass);
+        $results = [];
+
+        foreach ($reflection->getMethods() as $method) {
+            $params = [];
+            foreach ($method->getParameters() as $param) {
+                // getType() returns ReflectionType (or null if untyped)
+                $type = $param->getType();
+
+                // Convert ReflectionType to a readable string (works for PHP 7.1+)
+                $params[$param->getName()] = $type ? (string)$type : 'mixed/untyped';
+            }
+            $results[$method->getName()] = $params;
+        }
+        return $results;
     }
 
     /**
@@ -67,27 +85,30 @@ class DataRenderer implements DataRendererInterface
      * @return false|array Returns the interleaved array of elements from the input arrays,
      *                     or false if an error occurs.
      */
-    private function interleaveArrays(): false|array
+    private function interleaveArrays(array ...$arrays): array
     {
-        $args = func_get_args();
-        $total = count($args);
+        $total = count($arrays);
+
         if ($total === 0) {
             return [];
         }
+
         if ($total === 1) {
-            return $args[0];
+            return $arrays[0];
         }
-        $j = 0;
-        $arr = [];
-        foreach ($args as $argIndex => $arg) {
-            $j = $argIndex; // Start position for this array
-            foreach ($arg as $v) {
-                $arr[$j] = $v;
-                $j += $total;
+
+        $result = [];
+        $maxLength = max(array_map('count', $arrays));
+
+        for ($i = 0; $i < $maxLength; $i++) {
+            foreach ($arrays as $array) {
+                if (isset($array[$i])) {
+                    $result[] = $array[$i];
+                }
             }
         }
-        ksort($arr);
-        return array_values($arr);
+
+        return $result;
     }
 
     /**
@@ -105,6 +126,7 @@ class DataRenderer implements DataRendererInterface
      * @throws StrictValueConstraintException
      * @throws StrictValueConstraintException
      */
+    #[Override]
     public function processVariable(string $tag, array $data): mixed
     {
         $scriptParts = explode('#', $tag, 2);
@@ -141,7 +163,7 @@ class DataRenderer implements DataRendererInterface
      */
     private function containsArithmetic(string $text): bool
     {
-        return preg_match_all($this->arithmeticRegEx, $text, $matches) > 0;
+        return preg_match_all(static::ARITHMETIC_PATTERN, $text, $matches) > 0;
     }
 
     /**
@@ -152,11 +174,11 @@ class DataRenderer implements DataRendererInterface
      */
     private function processArithmeticExpression(array $scriptParts, array $data): mixed
     {
-        $varMembers = preg_split($this->arithmeticRegEx, $scriptParts[0]);
+        $varMembers = preg_split(static::ARITHMETIC_PATTERN, $scriptParts[0]);
         $this->processMembers($varMembers, $data);
 
         $arithmetic = [];
-        preg_match_all($this->arithmeticRegEx, $scriptParts[0], $arithmetic);
+        preg_match_all(static::ARITHMETIC_PATTERN, $scriptParts[0], $arithmetic);
         $expression = implode('', (array)$this->interleaveArrays($varMembers, $arithmetic[0]));
         $result = $this->safeMathEval->evaluate($expression);
 
@@ -197,8 +219,8 @@ class DataRenderer implements DataRendererInterface
             return $this->resolveNestedValue($memberPath, $data, $default);
         }
 
-        return array_key_exists($memberPath, $this->allData)
-            ? $this->allData[$memberPath]
+        return array_key_exists($memberPath, $this->data)
+            ? $this->data[$memberPath]
             : $default;
     }
 
@@ -241,8 +263,36 @@ class DataRenderer implements DataRendererInterface
         } else {
             array_unshift($arguments, $value);
         }
+        array_walk($arguments, function (&$argument, $key, $functionName) {
+            if (isset($this->argumentsTypes[$functionName])) {
+                $values = array_values($this->argumentsTypes[$functionName]);
+            } else {
+                try {
+                    $reflection = new ReflectionFunction($functionName);
+                    $values = [];
+                    foreach ($reflection->getParameters() as $parameter) {
+                        $values[] = $parameter->getType()?->getName() ?? 'mixed';
+                    }
+                } catch (Throwable $ignored) {
+                    $values = [];
+                }
+            }
 
+
+            $argument = $this->castToType($argument, $values[$key] ?? 'mixed');
+        }, $functionName);
         return $this->functions->$functionName(...$arguments);
+    }
+
+    private function castToType(mixed $value, string $type): mixed
+    {
+        return match ($type) {
+            'int', 'integer' => is_numeric($value) ? (int)$value : $value,
+            'float', 'double' => is_numeric($value) ? (float)$value : $value,
+            'bool', 'boolean' => filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? $value,
+            'string' => (string)$value,
+            default => $value,
+        };
     }
 
     /**
@@ -253,7 +303,7 @@ class DataRenderer implements DataRendererInterface
      */
     private function validateResult(mixed $value, string $context): void
     {
-        if ($value !== false && empty($value) && $this->strictMode) {
+        if ($this->strictMode && $value !== false && empty($value) && $value !== 0 && $value !== '0') {
             throw new StrictValueConstraintException(sprintf(StrictValueConstraintException::EMPTY_VALUE, $context));
         }
     }

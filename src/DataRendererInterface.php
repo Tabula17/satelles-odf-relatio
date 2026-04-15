@@ -22,7 +22,7 @@ interface DataRendererInterface
         set;
     }
 
-    public array|null $allData {
+    public array|null $data {
         set;
     }
 

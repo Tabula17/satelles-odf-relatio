@@ -19,7 +19,7 @@ class DataRendererTest extends TestCase
     public function testProcessVariableWithSimpleValue(): void
     {
         $data = ['name' => 'John Doe'];
-        $this->renderer->allData = $data;
+        $this->renderer->data = $data;
         
         $result = $this->renderer->processVariable('${name}', $data);
         
@@ -38,7 +38,7 @@ class DataRendererTest extends TestCase
     public function testProcessVariableWithArithmeticOperation(): void
     {
         $data = ['price' => 10, 'tax' => 2];
-        $this->renderer->allData = $data;
+        $this->renderer->data = $data;
         
         $result = $this->renderer->processVariable('${price}+${tax}', $data);
         
@@ -48,7 +48,7 @@ class DataRendererTest extends TestCase
     public function testProcessVariableWithFunction(): void
     {
         $data = ['text' => 'hello'];
-        $this->renderer->allData = $data;
+        $this->renderer->data = $data;
         
         $result = $this->renderer->processVariable('${text}#upper', $data);
         
@@ -73,7 +73,7 @@ class DataRendererTest extends TestCase
     public function testMultipleArithmeticOperations(): void
     {
         $data = ['a' => 10, 'b' => 5, 'c' => 2];
-        $this->renderer->allData = $data;
+        $this->renderer->data = $data;
         
         $result = $this->renderer->processVariable('${a}+${b}*${c}', $data);
         
@@ -83,7 +83,7 @@ class DataRendererTest extends TestCase
     public function testFunctionWithMultipleArguments(): void
     {
         $data = ['text' => 'hello world'];
-        $this->renderer->allData = $data;
+        $this->renderer->data = $data;
         
         $result = $this->renderer->processVariable('${text}#substr|0|5', $data);
         
