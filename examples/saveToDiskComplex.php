@@ -5,21 +5,12 @@ include __DIR__ . str_replace('/', DIRECTORY_SEPARATOR, '/media/data.php');
 
 use Tabula17\Satelles\Odf\Converter\PandocConverter;
 use Tabula17\Satelles\Odf\Converter\SofficeConverter;
+use Tabula17\Satelles\Odf\Exception\ConversionException;
 use Tabula17\Satelles\Odf\Exporter\ExportToFile;
 use Tabula17\Satelles\Odf\File\OdfContainer;
 use Tabula17\Satelles\Odf\Functions\Advanced;
 use Tabula17\Satelles\Odf\OdfProcessor;
 use Tabula17\Satelles\Odf\Renderer\DataRenderer;
-
-const SOFFICE_BIN = [
-    'darwin' => '/Applications/LibreOffice.app/Contents/MacOS/soffice',
-    'windows' => 'C:\Program Files\LibreOffice\program\soffice.exe',
-    'linux' => '/usr/bin/soffice'
-];
-/**
- * Si la instalación se encuentra en otra ruta cambie los valores de la variable $soffice con la misma!
- */
-$soffice = SOFFICE_BIN[strtolower(PHP_OS_FAMILY)] ?? SOFFICE_BIN['linux'];
 
 $baseDir = realpath(__DIR__ . DIRECTORY_SEPARATOR . 'tmp');
 $zipHandler = new ZipArchive();
@@ -39,15 +30,19 @@ $savesDir = realpath(__DIR__ . DIRECTORY_SEPARATOR . 'saves');
 $filename = "Complex Report generated - " . date('Y-m-d H:i:s');
 
 $converter = null;
-if (SofficeConverter::isInstalled()) {
-    $converter = new SofficeConverter(format: 'pdf', outputDir: $odfLoader->workingDir, soffice: $soffice, overwrite: false);
-} else if (PandocConverter::isInstalled()) {
-    $converter = new PandocConverter(
-        from: 'odt', outputDir: $odfLoader->workingDir, overwrite: false
-    );
-} else {
-    $filename = str_replace('.pdf', '.odt', $filename);
-    trigger_error("No se encontró el binario de 'libreoffice' y tampoco el de 'pandoc', no podemos convertir el archivo", E_USER_NOTICE);
+try {
+    if (SofficeConverter::isInstalled()) {
+        $converter = new SofficeConverter(format: 'pdf', outputDir: $odfLoader->workingDir, overwrite: false);
+    } else if (PandocConverter::isInstalled()) {
+        $converter = new PandocConverter(
+            from: 'odt', outputDir: $odfLoader->workingDir, overwrite: false
+        );
+    } else {
+        $filename = str_replace('.pdf', '.odt', $filename);
+        trigger_error("No se encontró el binario de 'libreoffice' y tampoco el de 'pandoc', no podemos convertir el archivo", E_USER_NOTICE);
+    }
+} catch (ConversionException $e) {
+
 }
 
 

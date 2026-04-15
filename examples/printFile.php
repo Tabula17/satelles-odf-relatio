@@ -9,17 +9,6 @@ use Tabula17\Satelles\Odf\Functions\Advanced;
 use Tabula17\Satelles\Odf\OdfProcessor;
 use Tabula17\Satelles\Odf\Renderer\DataRenderer;
 
-const SOFFICE_BIN = [
-    'darwin' => '/Applications/LibreOffice.app/Contents/MacOS/soffice',
-    'windows' => 'C:\Program Files\LibreOffice\program\soffice.exe',
-    'linux' => '/usr/bin/soffice'
-];
-/**
- * Si la instalación se encuentra en otra ruta cambie los valores de la variable $soffice con la misma!
- */
-$soffice = SOFFICE_BIN[strtolower(PHP_OS_FAMILY)] ?? SOFFICE_BIN['linux'];
-
-
 $cli_options = getopt('', ['printer:', 'host:', 'port:']);
 $required_options = ['printer'];
 if (!$cli_options) {

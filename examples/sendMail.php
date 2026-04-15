@@ -2,7 +2,12 @@
 require __DIR__ . str_replace('/', DIRECTORY_SEPARATOR, '/../vendor/autoload.php');
 include __DIR__ . str_replace('/', DIRECTORY_SEPARATOR, '/media/data.php');
 
+use Tabula17\Satelles\Odf\Converter\PandocConverter;
 use Tabula17\Satelles\Odf\Converter\SofficeConverter;
+use Tabula17\Satelles\Odf\Exception\CompilationException;
+use Tabula17\Satelles\Odf\Exception\ConversionException;
+use Tabula17\Satelles\Odf\Exception\ValidationException;
+use Tabula17\Satelles\Odf\Exception\RuntimeException;
 use Tabula17\Satelles\Odf\Exporter\ExportToMail;
 use Tabula17\Satelles\Odf\Exporter\NetteMailWrapper;
 use Tabula17\Satelles\Odf\Exporter\SymfonyMailerWrapper;
@@ -11,15 +16,6 @@ use Tabula17\Satelles\Odf\Functions\Advanced;
 use Tabula17\Satelles\Odf\OdfProcessor;
 use Tabula17\Satelles\Odf\Renderer\DataRenderer;
 
-const SOFFICE_BIN = [
-    'darwin' => '/Applications/LibreOffice.app/Contents/MacOS/soffice',
-    'windows' => 'C:\Program Files\LibreOffice\program\soffice.exe',
-    'linux' => '/usr/bin/soffice'
-];
-/**
- * Si la instalación se encuentra en otra ruta cambie los valores de la variable $soffice con la misma!
- */
-$soffice = SOFFICE_BIN[strtolower(PHP_OS_FAMILY)] ?? SOFFICE_BIN['linux'];
 
 $cli_options = getopt('u:p:s:t:h:e:', ['transport:']);
 $required_options = ['u', 'p', 's', 't'];
@@ -60,12 +56,20 @@ $savesDir = realpath(__DIR__ . DIRECTORY_SEPARATOR . 'saves');
 
 $filename = "Sales Order - " . $data['docNumber'] . ".pdf";
 
-if (file_exists($soffice)) {
-    $converter = new SofficeConverter(format: 'pdf', outputDir: $odfLoader->workingDir, soffice: $soffice, overwrite: false);
-} else {
-    $filename = str_replace('.pdf', '.odt', $filename);
-    $converter = null;
-    trigger_error("No se encontró el binario de libreoffice, no podemos convertir el archivo", E_USER_NOTICE);
+$converter = null;
+try {
+    if (SofficeConverter::isInstalled()) {
+        $converter = new SofficeConverter(format: 'pdf', outputDir: $odfLoader->workingDir,  overwrite: false);
+    } else if (PandocConverter::isInstalled()) {
+        $converter = new PandocConverter(
+            from: 'odt', outputDir: $odfLoader->workingDir, overwrite: false
+        );
+    } else {
+        $filename = str_replace('.pdf', '.odt', $filename);
+        trigger_error("No se encontró el binario de 'libreoffice' y tampoco el de 'pandoc', no podemos convertir el archivo", E_USER_NOTICE);
+    }
+} catch (ConversionException $e) {
+
 }
 
 $mail = [
@@ -106,8 +110,13 @@ if ($transport === 'symfony') {
 $exporter = new ExportToMail($mailer, $filename); // Send with Symfony
 $exporter->converter = $converter; // Set the converter to the exporter
 
-$odfLoader->loadFile()
-    ->process($data)
-    ->compile()
-    ->exportTo($exporter)
-    ->cleanUpWorkingDir();
+try {
+    $odfLoader->loadFile()
+        ->process($data)
+        ->compile()
+        ->exportTo($exporter);
+} catch (CompilationException|ValidationException|RuntimeException $e) {
+
+} finally{
+    $odfLoader->cleanUpWorkingDir();
+}
