@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tabula17\Satelles\Odf;
 
+use Swoole\Coroutine;
+use Swoole\Coroutine\Channel;
 use Tabula17\Satelles\Odf\Exception\CompilationException;
 use Tabula17\Satelles\Odf\Exception\FileException;
 use Tabula17\Satelles\Odf\Exception\FileNotFoundException;
@@ -15,6 +17,7 @@ use Tabula17\Satelles\Odf\File\OdfContainer;
 use Tabula17\Satelles\Odf\Renderer\DataRenderer;
 use Tabula17\Satelles\Odf\Template\XmlProcessor;
 use Throwable;
+use ZipArchive;
 
 /**
  * Class OdfProcessor
@@ -51,8 +54,8 @@ class OdfProcessor
     {
         self::$parallelProcessingEnabled = $enable &&
             extension_loaded('swoole') &&
-            class_exists('Swoole\Coroutine') &&
-            \Swoole\Coroutine::getCid() > 0; // Solo si ya estamos en una corrutina
+            class_exists(Coroutine::class) &&
+            Coroutine::getCid() > 0; // Solo si ya estamos en una corrutina
     }
 
     /**
@@ -97,20 +100,20 @@ class OdfProcessor
     /**
      * Obtiene un ZipArchive del pool
      */
-    private function getZipArchive(): \ZipArchive
+    private function getZipArchive(): ZipArchive
     {
         // Solo usar pool en entornos Swoole Server (no en CLI)
         if (self::$parallelProcessingEnabled && !empty(self::$zipArchivePool)) {
             return array_pop(self::$zipArchivePool);
         }
 
-        return new \ZipArchive();
+        return new ZipArchive();
     }
 
     /**
      * Devuelve un ZipArchive al pool
      */
-    private function returnZipArchive(\ZipArchive $zip): void
+    private function returnZipArchive(ZipArchive $zip): void
     {
         if (self::$parallelProcessingEnabled && count(self::$zipArchivePool) < self::$maxPoolSize) {
             self::$zipArchivePool[] = $zip;
@@ -201,7 +204,7 @@ class OdfProcessor
         $styles = $this->fileContainer->getPart(XmlMemberPath::STYLES);
 
         // Solo usar paralelismo si está explícitamente habilitado Y estamos en Swoole Server
-        if (self::$parallelProcessingEnabled && \Swoole\Coroutine::getCid() > 0) {
+        if (self::$parallelProcessingEnabled && Coroutine::getCid() > 0) {
             $this->processXmlFilesParallel($content, $styles, $data, $alias);
         } else {
             // Procesamiento síncrono (sin warnings)
@@ -215,10 +218,10 @@ class OdfProcessor
      */
     private function processXmlFilesParallel($content, $styles, array $data, ?string $alias): void
     {
-        $channel = new \Swoole\Coroutine\Channel(2);
+        $channel = new Channel(2);
 
         // Procesar content.xml en corrutina
-        \Swoole\Coroutine::create(function() use ($content, $data, $alias, $channel) {
+        Coroutine::create(function() use ($content, $data, $alias, $channel) {
             try {
                 $this->xmlProcessor->processTemplate($content, $data, $alias);
                 $channel->push(['success' => true]);
@@ -228,7 +231,7 @@ class OdfProcessor
         });
 
         // Procesar styles.xml en corrutina
-        \Swoole\Coroutine::create(function() use ($styles, $data, $alias, $channel) {
+        Coroutine::create(function() use ($styles, $data, $alias, $channel) {
             try {
                 $this->xmlProcessor->processTemplate($styles, $data, $alias);
                 $channel->push(['success' => true]);
