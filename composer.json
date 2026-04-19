@@ -40,15 +40,19 @@
   },
   "repositories": [
     {
-      "type": "composer",
-      "url": "https://tabula17.repo.repman.io"
+      "type": "vcs",
+      "url": "git@github.com:Tabula17/satelles-xml-frater.git"
+    },
+    {
+      "type": "vcs",
+      "url": "git@github.com:Tabula17/satelles-securitas.git"
     }
   ],
   "minimum-stability": "dev",
   "prefer-stable": true,
   "require": {
-    "xvii/satelles-xml-frater": "^1.0",
-    "xvii/satelles-securitas": "^1.0",
+    "xvii/satelles-xml-frater": "*",
+    "xvii/satelles-securitas": "*",
     "php": ">=8.5",
     "ext-zip": "*",
     "ext-fileinfo": "*",
