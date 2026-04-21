@@ -30,12 +30,14 @@ $savesDir = realpath(__DIR__ . DIRECTORY_SEPARATOR . 'saves');
 
 $filename = "Report generated - " . date('Y-m-d H:i:s') . ".pdf";
 
-
+echo $filename. PHP_EOL;
 $converter = null;
 try {
     if (SofficeConverter::isInstalled()) {
-        $converter = new SofficeConverter(format: 'pdf', outputDir: $odfLoader->workingDir,  overwrite: false);
+        echo "Soffice is installed". PHP_EOL;
+        $converter = new SofficeConverter(format: 'pdf', outputDir: $odfLoader->workingDir, overwrite: false);
     } else if (PandocConverter::isInstalled()) {
+        echo "Pandoc is installed". PHP_EOL;
         $converter = new PandocConverter(
             from: 'odt', outputDir: $odfLoader->workingDir, overwrite: false
         );
@@ -44,7 +46,7 @@ try {
         trigger_error("No se encontró el binario de 'libreoffice' y tampoco el de 'pandoc', no podemos convertir el archivo", E_USER_NOTICE);
     }
 } catch (ConversionException $e) {
-
+    echo $e->getMessage();
 }
 
 $exporter = new ExportToFile($savesDir, $filename);
@@ -54,3 +56,9 @@ $odfLoader->loadFile()
     ->process($data)
     ->compile()
     ->exportTo($exporter)->cleanUpWorkingDir();
+
+foreach ($odfLoader->getExporterResults() as $exporterName => $result) {
+    echo $result['file'] . ' => ' . $result['output'] . PHP_EOL;
+}
+
+echo var_export($odfLoader->getResult(), true);

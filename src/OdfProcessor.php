@@ -69,6 +69,8 @@ class OdfProcessor
      * @param OdfContainer|null $fileContainer Pre-configured container
      * @param DataRenderer|null $renderer Data renderer
      * @param XmlProcessorInterface|null $xmlProcessor Custom XML processor
+     * @throws FileNotFoundException
+     * @throws FileException
      */
     public function __construct(
         private readonly string        $filePath,
@@ -548,21 +550,26 @@ class OdfProcessor
     {
         return $this->fileIsLoaded;
     }
+
     public function isFileCompiled(): bool
     {
         return $this->fileIsCompiled;
     }
-    public function getResult():array
+
+    public function getResult(): array
     {
         if (!$this->fileIsCompiled) {
             return [];
         }
         return [
             'processId' => $this->processId,
+            'template' => $this->filePath,
+            'exporters' => $this->exporterResults->keys(),
+            'files' => $this->exporterResults->getFiles(),
+            'errors' => $this->exporterErrors,
             'startedAt' => $this->startedAt,
             'finishedAt' => $this->finishedAt,
-            'exporterResults' => $this->exporterResults->toArray(),
-            'exporterErrors' => $this->exporterErrors,
+            'duration' => $this->finishedAt * 1000 - $this->startedAt * 1000,
         ];
     }
 }

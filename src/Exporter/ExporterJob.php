@@ -33,7 +33,7 @@ class ExporterJob extends AbstractDescriptor
             }
         }
     }
-    protected(set) string $startedAt
+    protected(set) DateTimeImmutable $startedAt
         {
             set(DateTimeImmutable|string $value) {
                 if (is_string($value)) {
@@ -46,11 +46,8 @@ class ExporterJob extends AbstractDescriptor
                     $this->startedAt = $value;
                 }
             }
-            get {
-                return $this->startedAt?->format(DATE_ATOM);
-            }
         }
-    protected(set) ?string $finishedAt
+    protected(set) ?DateTimeImmutable $finishedAt
         {
             set(DateTimeImmutable|string|null $value) {
                 if (is_string($value)) {
@@ -62,12 +59,9 @@ class ExporterJob extends AbstractDescriptor
                 } else {
                     $this->finishedAt = $value;
                 }
-                if ($value && $this->startedAt) {
-                    $this->durationMs = $this->startedAt->getTimestamp() - $value->getTimestamp();
+                if ($value) {
+                    $this->durationMs = $this->startedAt->diff($value)->f * 1000;
                 }
-            }
-            get {
-                return $this->startedAt?->format(DATE_ATOM);
             }
         }
     public ?float $durationMs = null;
@@ -107,14 +101,15 @@ class ExporterJob extends AbstractDescriptor
             }
             $data['stats'] = [
                 'durationMs' => $this->durationMs,
-                'startedAt' => $this->startedAt,
-                'finishedAt' => $this->finishedAt,
+                'startedAt' => $this->startedAt->format(DATE_ATOM),
+                'finishedAt' => $this->finishedAt->format(DATE_ATOM),
             ];
 
             return $data;
         }
         return null;
     }
+
     public function markQueued(): void
     {
         $this->status = RelatioStatusEnum::Queued;

@@ -19,11 +19,11 @@ class ExporterJobCollection extends TypedCollection
 
     public function getFiles(): array
     {
-       return  array_merge($this->collect('file'), $this->collect('output'));
+        return array_filter(array_merge(array_values($this->collect('file')), array_values($this->collect('output'))), static fn($value) => file_exists($value));
     }
 
     public function collect(string $key): array
     {
-        return array_filter(array_map(static fn(ExporterJobCollection $config) => $config->$key, $this->values));
+        return array_filter(array_map(static fn(ExporterJob $config) => $config->$key, $this->values));
     }
 }
