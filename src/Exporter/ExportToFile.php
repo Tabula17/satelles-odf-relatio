@@ -64,12 +64,14 @@ class ExportToFile implements ExporterInterface
      * Processes the given file by validating its existence, applying a conversion (if applicable),
      * and copying it to the specified destination.
      *
-     * @param string $file
+     * @param ExporterJob $job
      * @param array|null $parameters
+     * @param array|null $previousFiles
+     * @param string $file
      * @return ExporterJob Returns the result of the copy operation or the processed file.
      * @throws ExporterException
      */
-    public function processFile(ExporterJob $job, ?array $parameters = []): ExporterJob
+    public function processFile(ExporterJob $job, ?array $parameters = [], ?array $previousFiles = []): ExporterJob
     {
         $job->markRunning();
         $file = $job->file;
@@ -79,7 +81,7 @@ class ExportToFile implements ExporterInterface
             if (!file_exists($file)) {
                 throw new ExporterException(FileNotFoundException::FILE_NOT_FOUND . ': ' . $file);
             }
-            if ($this->converter) {
+            if (isset($this->converter)) {
                 try {
                     $file = $this->converter->convert($file, $filename) ?? $file;
                 } catch (Exception $e) {

@@ -58,16 +58,18 @@ class ExportToPrinter implements ExporterInterface
 
 
     /**
-     * @param string $file
+     * @param ExporterJob $job
      * @param array|null $parameters
+     * @param array|null $previousFiles
+     * @param string $file
      * @return mixed
      * @throws ExporterException
      */
-    public function processFile(ExporterJob $job, ?array $parameters = []): ExporterJob
+    public function processFile(ExporterJob $job, ?array $parameters = [], ?array $previousFiles = []): ExporterJob
     {
         $job->markRunning();
-        // if 'file' is set on parameters (can be an early conversion), use it, otherwise use the file from the job
-        $file = $parameters['file'] ?? $job->file;
+        // if 'file' is set on parameters or exists file on $previousFiles (can be an early conversion), use it, otherwise use the file from the job
+        $file = $parameters['file'] ?? end($previousFiles) ?? $job->file;
         try {
             $job->data = [
                 'result' => $this->printer->print($file)

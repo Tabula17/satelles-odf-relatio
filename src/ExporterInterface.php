@@ -28,5 +28,5 @@ interface ExporterInterface
      * @param array|null $parameters
      * @return mixed
      */
-    public function processFile(ExporterJob $job, ?array $parameters = []): ExporterJob;
+    public function processFile(ExporterJob $job, ?array $parameters = [], ?array $previousFiles = []): ExporterJob;
 }

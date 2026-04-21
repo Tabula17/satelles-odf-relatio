@@ -62,20 +62,19 @@ class ExportToMail implements ExporterInterface
     /**
      * Processes the given file by optionally converting it and attaching it to an email.
      *
-     * @param string $file
+     * @param ExporterJob $job
      * @param array|null $parameters
+     * @param array|null $previousFiles
      * @return mixed The result of sending the email after the file is processed and attached.
-     * @throws ConversionException If the file conversion fails.
-     * @throws ExporterException
      */
-    public function processFile(ExporterJob $job, ?array $parameters = []): ExporterJob
+    public function processFile(ExporterJob $job, ?array $parameters = [], ?array $previousFiles = []): ExporterJob
     {
         $job->markRunning();
-        // if 'file' is set on parameters (can be an early conversion), use it, otherwise use the file from the job
-        $file = $parameters['file'] ?? $job->file;
+        // if 'file' is set on parameters or exists file on $previousFiles (can be an early conversion), use it, otherwise use the file from the job
+        $file = $parameters['file'] ?? end($previousFiles) ?? $job->file;
         try {
             $filename = $this->filename ?? basename($file);
-            if ($this->converter) {
+            if (isset($this->converter)) {
                 try {
                     $file = $this->converter->convert($file, $filename) ?? $file;
                 } catch (Exception $e) {

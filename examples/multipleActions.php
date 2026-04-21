@@ -92,7 +92,10 @@ if ($canSendMail) {
             'appKey' => $cli_options['p'],
             'sender' => $cli_options['s']
         ];
+
         $dsn = 'gmail+smtp://' . $mail_options['username'] . ':' . rawurlencode($mail_options['appKey']) . '@default';
+        //$dsn = "smtp://smtp.address:port?verify_peer=0"; // if you are using a smtp server and a self-signed certificate
+
         $mailer = new SymfonyMailerWrapper($dsn);
     } else {
         $mail_options = [
@@ -137,8 +140,8 @@ try {
 
     if ($canSendMail) {
         $params = [];
-        if ($odfResult->isSuccess()) {
-            $params['file'] = $odfResult->getResult()['file'];
+        if ($odfResult->status->isCompleted()) {
+            $params['file'] = $odfResult->output;
         } else {
             $sender->converter = $converter;
         }
@@ -147,6 +150,18 @@ try {
     if ($canPrint) {
         $odfLoader->exportTo($printer);
     }
+
+    foreach ($odfLoader->exporterResults as $exporterName => $result) {
+        echo $exporterName . PHP_EOL . PHP_EOL;
+        echo $result->status->value . PHP_EOL . PHP_EOL;
+        if ($result->status->isFailed()) {
+            echo var_export($result->error, true) . PHP_EOL . PHP_EOL;
+        } else {
+            echo $result['file'] . PHP_EOL . ' ====> ' . ($result['output'] ?? var_export($result['data'] ?? [], true)) . PHP_EOL;
+        }
+    }
+
+    echo var_export($odfLoader->getResult(), true);
 } catch (CompilationException|\Tabula17\Satelles\Odf\Exception\RuntimeException|ValidationException $e) {
 
 } finally {

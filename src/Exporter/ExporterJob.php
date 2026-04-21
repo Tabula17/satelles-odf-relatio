@@ -19,7 +19,6 @@ class ExporterJob extends AbstractDescriptor
     public array $data = [];
     public ?string $error = null;
     public RelatioStatusEnum $status = RelatioStatusEnum::Pending {
-        get => RelatioStatusEnum::Pending;
         /**
          * @throws RuntimeException
          */

@@ -56,4 +56,11 @@ enum RelatioStatusEnum: string
             default => false
         };
     }
+    public function isCompleted(): bool
+    {
+        return match ($this) {
+            self::Completed => true,
+            default => false
+        };
+    }
 }

@@ -405,6 +405,12 @@ class OdfProcessor
             if (!file_exists($file)) {
                 throw new FileNotFoundException(sprintf(FileNotFoundException::FILE_NOT_FOUND, $file));
             }
+            $previousFields =[];
+            foreach ($this->exporterResults as $exporterResult) {
+                if($exporterResult->output !== null && !in_array($exporterResult->output, $previousFields)){
+                    $previousFields[] = $exporterResult->file;
+                }
+            }
             $job = new ExporterJob(
                 exportId: $this->generateId('export_'),
                 exporterName: $exporter->exporterName,
@@ -412,7 +418,7 @@ class OdfProcessor
                 action: $exporter->action,
                 file: $file,
             );
-            $this->exporterResults->set($exporter->exporterName, $exporter->processFile($job, $exportParams));
+            $this->exporterResults->set($exporter->exporterName, $exporter->processFile($job, $exportParams, $previousFields));
 
         } catch (Throwable $e) {
             $this->exporterErrors[$exporter->exporterName] = $e->getMessage();
@@ -439,6 +445,7 @@ class OdfProcessor
 
     /**
      * Compiles the processed ODF file.
+     * @throws CompilationException
      */
     public function compile(): self
     {

@@ -14,12 +14,12 @@ class ExporterJobCollection extends TypedCollection
 
     public function finished(): bool
     {
-        return array_all($this->values, static fn($value) => $value->isFinished());
+        return array_all($this->values, static fn($value) => $value->status->isFinished());
     }
 
     public function getFiles(): array
     {
-        return array_filter(array_merge(array_values($this->collect('file')), array_values($this->collect('output'))), static fn($value) => file_exists($value));
+        return array_filter(array_unique(array_merge(array_values($this->collect('file')), array_values($this->collect('output')))), static fn($value) => file_exists($value));
     }
 
     public function collect(string $key): array
