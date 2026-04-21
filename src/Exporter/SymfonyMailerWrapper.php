@@ -24,11 +24,11 @@ class SymfonyMailerWrapper implements MailSenderInterface
      * @param string|null $bodyText
      * @param string|null $bodyHtml
      */
-    public function __construct(string $dsn, string $sender, array $recipients, string $subject, ?string $bodyText = null, ?string $bodyHtml = null)
+    public function __construct(string $dsn)
     {
         $this->transport = Transport::fromDsn($dsn);
         $this->mail = new Email();
-        $this->mail->from($sender);
+       /* $this->mail->from($sender);
         $this->mail->to(...$recipients);
         $this->mail->subject($subject);
         if ($bodyText) {
@@ -36,7 +36,7 @@ class SymfonyMailerWrapper implements MailSenderInterface
         }
         if ($bodyHtml) {
             $this->mail->html($bodyHtml);
-        }
+        }*/
     }
 
     /**
@@ -68,5 +68,39 @@ class SymfonyMailerWrapper implements MailSenderInterface
         } catch (Throwable $e) {
             throw new ExporterException(sprintf(ExporterException::SENDER_ERROR, $e->getMessage()), 0, $e);
         }
+    }
+
+    public function setSubject(string $subject): void
+    {
+        $this->mail->subject($subject);
+    }
+
+    public function setBody(string $body, string $type = 'text'): void
+    {
+        if ($type === 'text') {
+            $this->mail->text($body);
+        } else {
+            $this->mail->html($body);
+        }
+    }
+
+    public function setTo(array $to): void
+    {
+        $this->mail->to(...$to);
+    }
+
+    public function setFrom(string $from): void
+    {
+        $this->mail->from($from);
+    }
+
+    public function setCc(array $cc): void
+    {
+        $this->mail->cc(...$cc);
+    }
+
+    public function setBcc(array $bcc): void
+    {
+        $this->mail->bcc(...$bcc);
     }
 }

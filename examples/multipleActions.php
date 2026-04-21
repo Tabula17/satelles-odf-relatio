@@ -93,7 +93,7 @@ if ($canSendMail) {
             'sender' => $cli_options['s']
         ];
         $dsn = 'gmail+smtp://' . $mail_options['username'] . ':' . rawurlencode($mail_options['appKey']) . '@default';
-        $mailer = new SymfonyMailerWrapper($dsn, $mail_options['sender'], $to, $mail['subject'], $mail['text'], $mail['html']);
+        $mailer = new SymfonyMailerWrapper($dsn);
     } else {
         $mail_options = [
             'host' => $cli_options['s'],
@@ -108,11 +108,17 @@ if ($canSendMail) {
             username: $mail_options['username'],
             password: $mail_options['password'], // your password
             encryption: $mail_options['encryption'], // or 'tls'
-        )), $mail_options['sender'], $to, $mail['subject'], $mail['text'], $mail['html']);
+        )));
     }
+    $mailer->setFrom($mail_options['sender']);
+    $mailer->setTo($to);
+    $mailer->setBody($mail['text'], 'text');
+    $mailer->setBody($mail['html'], 'html');
+    $mailer->setSubject($mail['subject']);
+
 
     $sender = new ExportToMail($mailer, $filename);
-    $sender->converter = $converter;
+    // $sender->converter = $converter;
 }
 $exporter = new ExportToFile($savesDir, $filename);
 $exporter->converter = $converter;
@@ -126,8 +132,17 @@ try {
         ->process($data)
         ->compile();
     $odfLoader->exportTo($exporter);
+
+    $odfResult = $odfLoader->exporterResults->get($exporter->exporterName);
+
     if ($canSendMail) {
-        $odfLoader->exportTo($sender);
+        $params = [];
+        if ($odfResult->isSuccess()) {
+            $params['file'] = $odfResult->getResult()['file'];
+        } else {
+            $sender->converter = $converter;
+        }
+        $odfLoader->exportTo($sender, $params);
     }
     if ($canPrint) {
         $odfLoader->exportTo($printer);

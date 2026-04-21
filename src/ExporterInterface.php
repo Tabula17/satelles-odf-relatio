@@ -2,11 +2,18 @@
 
 namespace Tabula17\Satelles\Odf;
 
+use Tabula17\Satelles\Odf\Exporter\ExporterActionsEnum;
+use Tabula17\Satelles\Odf\Exporter\ExporterJob;
+
 /**
  *
  */
 interface ExporterInterface
 {
+    public ExporterActionsEnum $action {
+        get;
+        set;
+    }
     public string $exporterName {
         get;
         set;
@@ -21,5 +28,5 @@ interface ExporterInterface
      * @param array|null $parameters
      * @return mixed
      */
-    public function processFile(string $file, ?array $parameters = []): mixed;
+    public function processFile(ExporterJob $job, ?array $parameters = []): ExporterJob;
 }

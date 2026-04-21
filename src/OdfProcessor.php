@@ -13,6 +13,8 @@ use Tabula17\Satelles\Odf\Exception\NonWritableFileException;
 use Tabula17\Satelles\Odf\Exception\RuntimeException;
 use Tabula17\Satelles\Odf\Exception\StrictValueConstraintException;
 use Tabula17\Satelles\Odf\Exception\ValidationException;
+use Tabula17\Satelles\Odf\Exporter\ExporterJobCollection;
+use Tabula17\Satelles\Odf\Exporter\ExporterJob;
 use Tabula17\Satelles\Odf\File\OdfContainer;
 use Tabula17\Satelles\Odf\Renderer\DataRenderer;
 use Tabula17\Satelles\Odf\Template\XmlProcessor;
@@ -41,10 +43,13 @@ class OdfProcessor
     private bool $shouldCleanup = true;
     private DataRenderer $renderer;
     private XmlProcessor $xmlProcessor;
-    public array $exporterResults = [];
+    public ExporterJobCollection $exporterResults;
     public array $exporterErrors = [];
 
     private(set) string $workingDir;
+    private ?string $processId;
+    private ?float $startedAt;
+    private ?float $finishedAt;
 
     /**
      * Habilita o deshabilita el procesamiento paralelo con corrutinas
@@ -66,12 +71,13 @@ class OdfProcessor
      * @param XmlProcessorInterface|null $xmlProcessor Custom XML processor
      */
     public function __construct(
-        private readonly string $filePath,
-        string $baseDir,
+        private readonly string        $filePath,
+        string                         $baseDir,
         private readonly ?OdfContainer $fileContainer = null,
-        ?DataRenderer $renderer = null,
-        ?XmlProcessorInterface $xmlProcessor = null
-    ) {
+        ?DataRenderer                  $renderer = null,
+        ?XmlProcessorInterface         $xmlProcessor = null
+    )
+    {
         if (!file_exists($this->filePath)) {
             throw new FileNotFoundException(sprintf(FileNotFoundException::FILE_NOT_FOUND, $this->filePath));
         }
@@ -81,7 +87,7 @@ class OdfProcessor
         }
 
         $this->setWorkingDirectory($baseDir);
-
+        $this->exporterResults = new ExporterJobCollection();
         $container = $fileContainer ?? new OdfContainer($this->getZipArchive());
         $this->renderer = $renderer ?? new DataRenderer([], null);
         $this->xmlProcessor = $xmlProcessor ?? new XmlProcessor($this->renderer, $container);
@@ -136,11 +142,20 @@ class OdfProcessor
     {
         $this->fileIsLoaded = false;
         $this->fileIsCompiled = false;
-        $this->exporterResults = [];
+        $this->exporterResults->clear();
         $this->exporterErrors = [];
         $this->renderer->data = null;
+        $this->processId = null;
+        $this->startedAt = null;
+        $this->finishedAt = null;
+
 
         return $this;
+    }
+
+    private function generateId(string $prefix = 'tplJob_'): string
+    {
+        return $prefix . bin2hex(random_bytes(8));
     }
 
     /**
@@ -221,7 +236,7 @@ class OdfProcessor
         $channel = new Channel(2);
 
         // Procesar content.xml en corrutina
-        Coroutine::create(function() use ($content, $data, $alias, $channel) {
+        Coroutine::create(function () use ($content, $data, $alias, $channel) {
             try {
                 $this->xmlProcessor->processTemplate($content, $data, $alias);
                 $channel->push(['success' => true]);
@@ -231,7 +246,7 @@ class OdfProcessor
         });
 
         // Procesar styles.xml en corrutina
-        Coroutine::create(function() use ($styles, $data, $alias, $channel) {
+        Coroutine::create(function () use ($styles, $data, $alias, $channel) {
             try {
                 $this->xmlProcessor->processTemplate($styles, $data, $alias);
                 $channel->push(['success' => true]);
@@ -316,7 +331,8 @@ class OdfProcessor
     public function loadFile(): self
     {
         $this->validateStateForLoading();
-
+        $this->processId = $this->generateId();
+        $this->startedAt = microtime(true);
         $odfFile = $this->workingDir . DIRECTORY_SEPARATOR . basename($this->filePath);
 
         try {
@@ -373,7 +389,7 @@ class OdfProcessor
     /**
      * Exports the processed ODF file.
      */
-    public function exportTo(ExporterInterface $exporter): self
+    public function exportTo(ExporterInterface $exporter, array $exportParams = []): self
     {
         try {
             $this->validateStateForExport($exporter);
@@ -387,8 +403,14 @@ class OdfProcessor
             if (!file_exists($file)) {
                 throw new FileNotFoundException(sprintf(FileNotFoundException::FILE_NOT_FOUND, $file));
             }
-
-            $this->exporterResults[$exporter->exporterName] = $exporter->processFile($file);
+            $job = new ExporterJob(
+                exportId: $this->generateId('export_'),
+                exporterName: $exporter->exporterName,
+                jobId: $this->processId,
+                action: $exporter->action,
+                file: $file,
+            );
+            $this->exporterResults->set($exporter->exporterName, $exporter->processFile($job, $exportParams));
 
         } catch (Throwable $e) {
             $this->exporterErrors[$exporter->exporterName] = $e->getMessage();
@@ -427,6 +449,7 @@ class OdfProcessor
         try {
             $this->fileContainer->saveFile();
             $this->fileIsCompiled = true;
+            $this->finishedAt = microtime(true);
             return $this;
         } catch (Throwable $e) {
             throw new CompilationException(
@@ -518,11 +541,28 @@ class OdfProcessor
 
     public function getExporterResults(): array
     {
-        return $this->exporterResults;
+        return $this->exporterResults->toArray();
     }
 
     public function isFileLoaded(): bool
     {
         return $this->fileIsLoaded;
+    }
+    public function isFileCompiled(): bool
+    {
+        return $this->fileIsCompiled;
+    }
+    public function getResult():array
+    {
+        if (!$this->fileIsCompiled) {
+            return [];
+        }
+        return [
+            'processId' => $this->processId,
+            'startedAt' => $this->startedAt,
+            'finishedAt' => $this->finishedAt,
+            'exporterResults' => $this->exporterResults->toArray(),
+            'exporterErrors' => $this->exporterErrors,
+        ];
     }
 }

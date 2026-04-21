@@ -14,6 +14,14 @@ use Tabula17\Satelles\Odf\FunctionsInterface;
  */
 class ExportToMail implements ExporterInterface
 {
+    public ExporterActionsEnum $action {
+        get {
+            return $this->action;
+        }
+        set {
+            $this->action = $value;
+        }
+    }
     public string $exporterName {
         /**
          * @return string
@@ -36,6 +44,7 @@ class ExportToMail implements ExporterInterface
             $this->converter = $value;
         }
     }
+
     /**
      * @param MailSenderInterface $mail
      * @param string|null $filename
@@ -47,6 +56,7 @@ class ExportToMail implements ExporterInterface
         $this->filename = $filename;
         $this->mail = $mail;
         $this->exporterName = $exporterName ?? 'ExportToMail' . uniqid('', false);
+        $this->action = ExporterActionsEnum::Mail;
     }
 
     /**
@@ -58,17 +68,67 @@ class ExportToMail implements ExporterInterface
      * @throws ConversionException If the file conversion fails.
      * @throws ExporterException
      */
-    public function processFile(string $file, ?array $parameters = []): mixed
+    public function processFile(ExporterJob $job, ?array $parameters = []): ExporterJob
     {
-        $filename = $this->filename ?? basename($file);
-        if ($this->converter) {
-            try {
-                $file = $this->converter->convert($file, $filename) ?? $file;
-            } catch (Exception $e) {
-                throw new ExporterException(sprintf(ExporterException::DEFAULT_MESSAGE, $e->getMessage()));
+        $job->markRunning();
+        // if 'file' is set on parameters (can be an early conversion), use it, otherwise use the file from the job
+        $file = $parameters['file'] ?? $job->file;
+        try {
+            $filename = $this->filename ?? basename($file);
+            if ($this->converter) {
+                try {
+                    $file = $this->converter->convert($file, $filename) ?? $file;
+                } catch (Exception $e) {
+                    throw new ExporterException(sprintf(ExporterException::DEFAULT_MESSAGE, $e->getMessage()));
+                }
             }
+            $this->mail->attach($file, $filename);
+
+            if (isset($parameters['subject'])) {
+                $this->mail->setSubject($parameters['subject']);
+            }
+            if (isset($parameters['bodyText'])) {
+                $this->mail->setBody($parameters['bodyText']);
+            }
+            if (isset($parameters['bodyHtml'])) {
+                $this->mail->setBody($parameters['bodyHtml'], 'html');
+            }
+            if (isset($parameters['to'])) {
+                if (!is_array($parameters['to'])) {
+                    $parameters['to'] = [$parameters['to']];
+                }
+                $this->mail->setTo($parameters['to']);
+            }
+            if (isset($parameters['from'])) {
+                $this->mail->setFrom($parameters['from']);
+            }
+            if (isset($parameters['cc'])) {
+                if (!is_array($parameters['cc'])) {
+                    $parameters['cc'] = [$parameters['cc']];
+                }
+                $this->mail->setCc($parameters['cc']);
+            }
+            if (isset($parameters['bcc'])) {
+                if (!is_array($parameters['bcc'])) {
+                    $parameters['bcc'] = [$parameters['bcc']];
+                }
+                $this->mail->setBcc($parameters['bcc']);
+            }
+
+            $job->data = [
+                'result' => $this->mail->send()
+            ];
+            $job->markCompleted();
+
+        } catch (\Throwable $th) {
+            $job->markFailed();
+            $job->error = $th->getMessage();
+            $job->data = [
+                'trace' => $th->getTraceAsString(),
+                'file' => $th->getFile(),
+            ];
         }
-        $this->mail->attach($file, $filename);
-        return $this->mail->send();
+        return $job;
+        //return $this->mail->send();
     }
 }

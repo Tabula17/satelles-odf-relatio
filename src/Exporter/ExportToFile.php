@@ -15,6 +15,14 @@ use Tabula17\Satelles\Odf\ExporterInterface;
 class ExportToFile implements ExporterInterface
 {
 
+    public ExporterActionsEnum $action {
+        get {
+            return $this->action;
+        }
+        set {
+            $this->action = $value;
+        }
+    }
     public string $exporterName {
         /**
          * @return string
@@ -49,6 +57,7 @@ class ExportToFile implements ExporterInterface
         $this->path = $path;
         $this->filename = $filename;
         $this->exporterName = $exporterName ?? 'ExportToFile' . uniqid('', false);
+        $this->action = ExporterActionsEnum::Export;
     }
 
     /**
@@ -57,29 +66,42 @@ class ExportToFile implements ExporterInterface
      *
      * @param string $file
      * @param array|null $parameters
-     * @return string Returns the result of the copy operation or the processed file.
+     * @return ExporterJob Returns the result of the copy operation or the processed file.
      * @throws ExporterException
      */
-    public function processFile(string $file, ?array $parameters = []): string
+    public function processFile(ExporterJob $job, ?array $parameters = []): ExporterJob
     {
-        $filename = $this->filename ?? basename($file);
+        $job->markRunning();
+        $file = $job->file;
+        try {
+            $filename = $this->filename ?? basename($file);
 
-        if (!file_exists($file)) {
-            throw new ExporterException(FileNotFoundException::FILE_NOT_FOUND . ': ' . $file);
-        }
-        if ($this->converter) {
-            try {
-                $file = $this->converter->convert($file, $filename) ?? $file;
-            } catch (Exception $e) {
-                throw new ExporterException(sprintf(ExporterException::DEFAULT_MESSAGE, $e->getMessage()));
+            if (!file_exists($file)) {
+                throw new ExporterException(FileNotFoundException::FILE_NOT_FOUND . ': ' . $file);
             }
+            if ($this->converter) {
+                try {
+                    $file = $this->converter->convert($file, $filename) ?? $file;
+                } catch (Exception $e) {
+                    throw new ExporterException(sprintf(ExporterException::DEFAULT_MESSAGE, $e->getMessage()));
+                }
+            }
+            $filePath = $this->path . DIRECTORY_SEPARATOR . $filename;
+            if (!copy($file, $filePath)) {
+                $error = error_get_last();
+                throw new ExporterException(sprintf(FileException::CANT_COPY, $file, $filePath) . ':' . PHP_EOL . $error['message']);
+            }
+            $job->output = $filePath;
+            $job->markCompleted();
+        } catch (\Throwable $th) {
+            $job->markFailed();
+            $job->error = $th->getMessage();
+            $job->data = [
+                'trace' => $th->getTraceAsString(),
+                'file' => $th->getFile(),
+            ];
         }
-        $filePath = $this->path . DIRECTORY_SEPARATOR . $filename;
-        if (!copy($file, $filePath)) {
-            $error = error_get_last();
-            throw new ExporterException(sprintf(FileException::CANT_COPY, $file, $filePath) . ':' . PHP_EOL . $error['message']);
-        }
-        return $filePath;
+        return $job;
     }
 
 }

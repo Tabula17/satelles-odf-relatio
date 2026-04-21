@@ -7,12 +7,22 @@ use Tabula17\Satelles\Odf\ConverterInterface;
 use Tabula17\Satelles\Odf\Exception\ExporterException;
 use Tabula17\Satelles\Odf\ExporterInterface;
 use Tabula17\Satelles\Odf\FunctionsInterface;
+use Throwable;
 
 /**
  *
  */
 class ExportToPrinter implements ExporterInterface
 {
+
+    public ExporterActionsEnum $action {
+        get {
+            return $this->action;
+        }
+        set {
+            $this->action = $value;
+        }
+    }
     public string $exporterName {
         /**
          * @return string
@@ -34,6 +44,7 @@ class ExportToPrinter implements ExporterInterface
             $this->converter = $value;
         }
     }
+
     /**
      * @param PrintSenderInterface $printer
      * @param string|null $exporterName
@@ -42,6 +53,7 @@ class ExportToPrinter implements ExporterInterface
     {
         $this->printer = $printer;
         $this->exporterName = $exporterName ?? 'ExportToPrinter' . uniqid('', false);
+        $this->action = ExporterActionsEnum::Print;
     }
 
 
@@ -51,12 +63,24 @@ class ExportToPrinter implements ExporterInterface
      * @return mixed
      * @throws ExporterException
      */
-    public function processFile(string $file, ?array $parameters = []): mixed
+    public function processFile(ExporterJob $job, ?array $parameters = []): ExporterJob
     {
+        $job->markRunning();
+        // if 'file' is set on parameters (can be an early conversion), use it, otherwise use the file from the job
+        $file = $parameters['file'] ?? $job->file;
         try {
-            return $this->printer->print($file);
-        } catch (Exception $e) {
-            throw new ExporterException($e->getMessage());
+            $job->data = [
+                'result' => $this->printer->print($file)
+            ];
+            $job->markCompleted();
+        } catch (Throwable $th) {
+            $job->markFailed();
+            $job->error = $th->getMessage();
+            $job->data = [
+                'trace' => $th->getTraceAsString(),
+                'file' => $th->getFile(),
+            ];
         }
+        return $job;
     }
 }

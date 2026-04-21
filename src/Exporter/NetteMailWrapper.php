@@ -23,11 +23,11 @@ class NetteMailWrapper implements MailSenderInterface
      * @param string|null $bodyText
      * @param string|null $bodyHtml
      */
-    public function __construct(Mailer $transport, string $sender, array $recipients, string $subject, ?string $bodyText = null, ?string $bodyHtml = null)
+    public function __construct(Mailer $transport)
     {
         $this->transport = $transport;
         $this->mail = new Message();
-        $this->mail->setFrom($sender);
+       /* $this->mail->setFrom($sender);
         foreach ($recipients as $mail) {
             $this->mail->addTo($mail);
         }
@@ -37,7 +37,7 @@ class NetteMailWrapper implements MailSenderInterface
         }
         if ($bodyHtml) {
             $this->mail->setHtmlBody($bodyHtml);
-        }
+        }*/
     }
 
     /**
@@ -61,5 +61,45 @@ class NetteMailWrapper implements MailSenderInterface
     {
         $this->transport->send($this->mail);
         return true;
+    }
+
+    public function setSubject(string $subject): void
+    {
+        $this->mail->setSubject($subject);
+    }
+
+    public function setBody(string $body, string $type = 'text'): void
+    {
+        if ($type === 'text') {
+            $this->mail->setBody($body);
+        } else {
+            $this->mail->setHtmlBody($body);
+        }
+    }
+
+    public function setTo(array $to): void
+    {
+        foreach ($to as $mail) {
+            $this->mail->addTo($mail);
+        }
+    }
+
+    public function setFrom(string $from): void
+    {
+        $this->mail->setFrom($from);
+    }
+
+    public function setCc(array $cc): void
+    {
+        foreach ($cc as $mail) {
+            $this->mail->addCc($mail);
+        }
+    }
+
+    public function setBcc(array $bcc): void
+    {
+        foreach ($bcc as $mail) {
+            $this->mail->addBcc($mail);
+        }
     }
 }
