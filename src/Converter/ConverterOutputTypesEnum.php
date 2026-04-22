@@ -25,14 +25,15 @@ enum ConverterOutputTypesEnum
         return $this === self::ResultInfo || $this->isFile();
     }
 
-    public static function fromString(string $type): self
+    public static function fromString(string $type): ?self
     {
         return match ($type) {
             'path' => self::Path,
             'file_content' => self::FileContent,
             'queue_info' => self::QueueInfo,
             'result_info' => self::ResultInfo,
-            default => self::Unchanged,
+            'unchanged' => self::Unchanged,
+            default => null,
         };
     }
 
