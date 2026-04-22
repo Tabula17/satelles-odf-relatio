@@ -61,9 +61,7 @@ class ExportToPrinter implements ExporterInterface
      * @param ExporterJob $job
      * @param array|null $parameters
      * @param array|null $previousFiles
-     * @param string $file
      * @return mixed
-     * @throws ExporterException
      */
     public function processFile(ExporterJob $job, ?array $parameters = [], ?array $previousFiles = []): ExporterJob
     {
