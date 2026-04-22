@@ -52,7 +52,7 @@ class ExportToPrinter implements ExporterInterface
     public function __construct(PrintSenderInterface $printer, ?string $exporterName = null)
     {
         $this->printer = $printer;
-        $this->exporterName = $exporterName ?? 'ExportToPrinter' . uniqid('', false);
+        $this->exporterName = $exporterName ?? substr(strrchr('\\' . static::class, '\\'), 1) . '_' . uniqid('', false);
         $this->action = ExporterActionsEnum::Print;
     }
 

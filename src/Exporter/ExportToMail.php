@@ -55,7 +55,7 @@ class ExportToMail implements ExporterInterface
     {
         $this->filename = $filename;
         $this->mail = $mail;
-        $this->exporterName = $exporterName ?? 'ExportToMail' . uniqid('', false);
+        $this->exporterName = $exporterName ?? substr(strrchr('\\' . static::class, '\\'), 1) . '_' . uniqid('', false);
         $this->action = ExporterActionsEnum::Mail;
     }
 

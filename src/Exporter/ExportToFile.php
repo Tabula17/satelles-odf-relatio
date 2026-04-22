@@ -56,7 +56,7 @@ class ExportToFile implements ExporterInterface
     {
         $this->path = $path;
         $this->filename = $filename;
-        $this->exporterName = $exporterName ?? 'ExportToFile' . uniqid('', false);
+        $this->exporterName = $exporterName ?? substr(strrchr('\\' . static::class, '\\'), 1) . '_' . uniqid('', false);
         $this->action = ExporterActionsEnum::Export;
     }
 
