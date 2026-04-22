@@ -567,7 +567,7 @@ class OdfProcessor
             'processId' => $this->processId,
             'template' => $this->filePath,
             'exporters' => $this->exporterResults->keys(),
-            'files' => $this->exporterResults->getFiles(),
+            'results' => $this->exporterResults->getResults(),
             'errors' => $this->exporterErrors,
             'startedAt' => $this->startedAt,
             'finishedAt' => $this->finishedAt,

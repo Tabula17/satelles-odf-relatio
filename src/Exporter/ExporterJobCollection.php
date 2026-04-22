@@ -24,6 +24,11 @@ class ExporterJobCollection extends TypedCollection
 
     public function collect(string $key): array
     {
-        return array_filter(array_map(static fn(ExporterJob $config) => $config->$key, $this->values));
+        return array_filter(array_map(static fn(ExporterJob $job) => $job->$key, $this->values));
+    }
+
+    public function getResults(): array
+    {
+        return array_filter(array_map(static fn(ExporterJob $job) => $job->status->isFinished() ? $job->jobResult() : null, $this->values));
     }
 }
