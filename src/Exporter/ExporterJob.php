@@ -67,7 +67,7 @@ class ExporterJob extends AbstractDescriptor
             }
         }
     public ?float $durationMs = null;
-
+    protected(set) ?ConverterOutputTypesEnum $outputType = null;
     public function __construct(
         string              $exportId,
         string              $exporterName,
@@ -89,6 +89,7 @@ class ExporterJob extends AbstractDescriptor
         $this->status = $status;
         $this->error = $error;
         $this->startedAt = $startedAt ?? new DateTimeImmutable();
+        $this->outputType = ConverterOutputTypesEnum::Unchanged;
         parent::__construct();
     }
 
@@ -141,6 +142,10 @@ class ExporterJob extends AbstractDescriptor
     public function markCancelled(): void
     {
         $this->status = RelatioStatusEnum::Cancelled;
+    }
+    public function switchTo(ConverterOutputTypesEnum $outputType): void
+    {
+        $this->outputType = $outputType;
     }
 
     public function getConverterJob(?string $outputTo = null, ConverterOutputTypesEnum $outputType = ConverterOutputTypesEnum::Path): ConverterJob

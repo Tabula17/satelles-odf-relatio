@@ -87,7 +87,7 @@ class ExportToFile implements ExporterInterface
                     $conversionJob = $job->getConverterJob($filename);
                     $conversionJob->options = $parameters;
                     // $result
-                    $this->converter->convert($conversionJob);
+                    $job->switchTo($this->converter->convert($conversionJob)->outputType);
                     //$file = $this->converter->convert($file, $filename) ?? $file;
                     if ($conversionJob->isCompleted()) {
                         $file = $conversionJob->output;

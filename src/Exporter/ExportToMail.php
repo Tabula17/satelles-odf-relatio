@@ -77,7 +77,9 @@ class ExportToMail implements ExporterInterface
             $filename = $this->filename ?? basename($file);
             if (isset($this->converter)) {
                 try {
-                    $file = $this->converter->convert($file, $filename) ?? $file;
+                    $conversionJob = $job->getConverterJob($filename);
+                    $conversionJob->options = $parameters;
+                    $job->switchTo($this->converter->convert($conversionJob)->outputType);
                 } catch (Exception $e) {
                     throw new ExporterException(sprintf(ExporterException::DEFAULT_MESSAGE, $e->getMessage()));
                 }
