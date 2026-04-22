@@ -4,6 +4,7 @@ namespace Tabula17\Satelles\Odf\Exporter;
 
 use DateTimeImmutable;
 use Tabula17\Satelles\Odf\Converter\ConverterJob;
+use Tabula17\Satelles\Odf\Converter\ConverterOutputTypesEnum;
 use Tabula17\Satelles\Odf\Exception\RuntimeException;
 use Tabula17\Satelles\Odf\OdfProcessor;
 use Tabula17\Satelles\Odf\RelatioStatusEnum;
@@ -142,12 +143,13 @@ class ExporterJob extends AbstractDescriptor
         $this->status = RelatioStatusEnum::Cancelled;
     }
 
-    public function getConverterJob(?string $outputTo = null): ConverterJob
+    public function getConverterJob(?string $outputTo = null, ConverterOutputTypesEnum $outputType = ConverterOutputTypesEnum::Path): ConverterJob
     {
         return new ConverterJob(
             convertId: OdfProcessor::generateId('convert_'),
             exportId: $this->exportId,
             jobId: $this->jobId,
+            outputType: $outputType,
             file: $this->file,
             output: $outputTo ?? $this->output,
         );

@@ -392,12 +392,14 @@ class PandocConverter implements ConverterInterface
         $this->validateInput($file);
 
         if (!$this->overwrite && file_exists($generatedFile)) {
+            $job->switchTo(ConverterOutputTypesEnum::Path);
             $result = $generatedFile;
             return 0;
         }
         return Coroutine::create(function () use ($file, $generatedFile, $job, &$result) {
             try {
                 $result = $this->convertAsync($file, $generatedFile);
+                $job->switchTo(ConverterOutputTypesEnum::Path);
                 $job->output = $result;
                 $job->markCompleted();
             } catch (Throwable $e) {

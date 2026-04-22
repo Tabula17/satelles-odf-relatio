@@ -8,6 +8,7 @@ use Tabula17\Satelles\Odf\Exception\ExporterException;
 use Tabula17\Satelles\Odf\Exception\FileException;
 use Tabula17\Satelles\Odf\Exception\FileNotFoundException;
 use Tabula17\Satelles\Odf\ExporterInterface;
+use Tabula17\Satelles\Odf\OdfProcessor;
 
 /**
  *
@@ -112,4 +113,14 @@ class ExportToFile implements ExporterInterface
         return $job;
     }
 
+    public function getExporterJob(string $file, string $ownerId): ExporterJob
+    {
+        return new ExporterJob(
+            exportId: OdfProcessor::generateId('fileExport_'),
+            exporterName: $this->exporterName,
+            jobId: $ownerId,
+            action: $this->action,
+            file: $file,
+        );
+    }
 }

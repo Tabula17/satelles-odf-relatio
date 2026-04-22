@@ -205,6 +205,7 @@ class SofficeConverter implements ConverterInterface
         // Verificar si ya existe y no sobrescribir
         if (!$this->overwrite && file_exists($generatedFile)) {
             $job->output = $generatedFile;
+            $job->switchTo(ConverterOutputTypesEnum::Path);
             $job->markCompleted();
             return $job;
         }
@@ -215,6 +216,7 @@ class SofficeConverter implements ConverterInterface
             : $this->convertSync($file, $generatedFile);
         if (file_exists($file)) {
             $job->output = $file;
+            $job->switchTo(ConverterOutputTypesEnum::Path);
             $job->markCompleted();
         } else {
             $job->output = null;

@@ -405,20 +405,15 @@ class OdfProcessor
             if (!file_exists($file)) {
                 throw new FileNotFoundException(sprintf(FileNotFoundException::FILE_NOT_FOUND, $file));
             }
-            $previousFields =[];
+            $previousFiles =[];
             foreach ($this->exporterResults as $exporterResult) {
-                if($exporterResult->output !== null && !in_array($exporterResult->output, $previousFields)){
-                    $previousFields[] = $exporterResult->file;
+                if($exporterResult->output !== null && !in_array($exporterResult->output, $previousFiles)){
+                    $previousFiles[] = $exporterResult->file;
                 }
             }
-            $job = new ExporterJob(
-                exportId: self::generateId('export_'),
-                exporterName: $exporter->exporterName,
-                jobId: $this->processId,
-                action: $exporter->action,
-                file: $file,
-            );
-            $this->exporterResults->set($exporter->exporterName, $exporter->processFile($job, $exportParams, $previousFields));
+            $job = $exporter->getExporterJob($file, $this->processId);
+
+            $this->exporterResults->set($exporter->exporterName, $exporter->processFile($job, $exportParams, $previousFiles));
 
         } catch (Throwable $e) {
             $this->exporterErrors[$exporter->exporterName] = $e->getMessage();

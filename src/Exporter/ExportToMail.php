@@ -8,6 +8,7 @@ use Tabula17\Satelles\Odf\Exception\ConversionException;
 use Tabula17\Satelles\Odf\Exception\ExporterException;
 use Tabula17\Satelles\Odf\ExporterInterface;
 use Tabula17\Satelles\Odf\FunctionsInterface;
+use Tabula17\Satelles\Odf\OdfProcessor;
 
 /**
  *
@@ -129,5 +130,15 @@ class ExportToMail implements ExporterInterface
         }
         return $job;
         //return $this->mail->send();
+    }
+    public function getExporterJob(string $file, string $ownerId): ExporterJob
+    {
+        return new ExporterJob(
+            exportId: OdfProcessor::generateId('sendMail_'),
+            exporterName: $this->exporterName,
+            jobId: $ownerId,
+            action: $this->action,
+            file: $file,
+        );
     }
 }

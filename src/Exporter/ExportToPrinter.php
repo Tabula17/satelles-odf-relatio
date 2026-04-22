@@ -7,6 +7,7 @@ use Tabula17\Satelles\Odf\ConverterInterface;
 use Tabula17\Satelles\Odf\Exception\ExporterException;
 use Tabula17\Satelles\Odf\ExporterInterface;
 use Tabula17\Satelles\Odf\FunctionsInterface;
+use Tabula17\Satelles\Odf\OdfProcessor;
 use Throwable;
 
 /**
@@ -82,5 +83,16 @@ class ExportToPrinter implements ExporterInterface
             ];
         }
         return $job;
+    }
+
+    public function getExporterJob(string $file, string $ownerId): ExporterJob
+    {
+        return new ExporterJob(
+            exportId: OdfProcessor::generateId('cupsExport_'),
+            exporterName: $this->exporterName,
+            jobId: $ownerId,
+            action: $this->action,
+            file: $file,
+        );
     }
 }

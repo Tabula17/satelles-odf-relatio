@@ -11,12 +11,14 @@ use Throwable;
 
 class ConverterJob extends AbstractDescriptor
 {
-
     public readonly string $convertId;
     public readonly string $exportId;
     public readonly string $jobId;
+    protected ConverterOutputTypesEnum $outputType;
+    public int $attempts = 0;
     public readonly string $file;
     public ?string $output = null;
+    public array $options = [];
     public array $data = [];
     public ?string $error = null;
     public RelatioStatusEnum $status = RelatioStatusEnum::Pending {
@@ -65,27 +67,33 @@ class ConverterJob extends AbstractDescriptor
             }
         }
     public ?float $durationMs = null;
+
     public function __construct(
-        string              $convertId,
-        string              $exportId,
-        string              $jobId,
-        string              $file,
-        ?string             $output = null,
-        ?DateTimeImmutable  $startedAt = null,
-        ?string             $error = null,
-        RelatioStatusEnum   $status = RelatioStatusEnum::Pending
+        string                   $convertId,
+        string                   $exportId,
+        string                   $jobId,
+        ConverterOutputTypesEnum $outputType,
+        string                   $file,
+        array                    $options = [],
+        ?string                  $output = null,
+        ?DateTimeImmutable       $startedAt = null,
+        ?string                  $error = null,
+        RelatioStatusEnum        $status = RelatioStatusEnum::Pending
     )
     {
         $this->convertId = $convertId;
         $this->exportId = $exportId;
         $this->jobId = $jobId;
+        $this->outputType = $outputType;
         $this->file = $file;
+        $this->options = $options;
         $this->output = $output;
         $this->status = $status;
         $this->error = $error;
         $this->startedAt = $startedAt ?? new DateTimeImmutable();
         parent::__construct();
     }
+
     public function jobResult(): array|null
     {
         if ($this->status->isFinished()) {
@@ -106,6 +114,7 @@ class ConverterJob extends AbstractDescriptor
         }
         return null;
     }
+
     public function markQueued(): void
     {
         $this->status = RelatioStatusEnum::Queued;
@@ -120,45 +129,59 @@ class ConverterJob extends AbstractDescriptor
     {
         $this->status = RelatioStatusEnum::Completed;
     }
+
     public function markFailed(): void
     {
         $this->status = RelatioStatusEnum::Failed;
     }
+
     public function markRetrying(): void
     {
         $this->status = RelatioStatusEnum::Retrying;
         $this->attempts++;
     }
+
     public function markCancelled(): void
     {
         $this->status = RelatioStatusEnum::Cancelled;
     }
+
     public function isQueued(): bool
     {
         return $this->status === RelatioStatusEnum::Queued;
     }
+
     public function isRunning(): bool
     {
         return $this->status === RelatioStatusEnum::Running;
     }
+
     public function isCompleted(): bool
     {
         return $this->status === RelatioStatusEnum::Completed;
     }
+
     public function isFailed(): bool
     {
         return $this->status === RelatioStatusEnum::Failed;
     }
+
     public function isCancelled(): bool
     {
         return $this->status === RelatioStatusEnum::Cancelled;
     }
+
     public function isRetrying(): bool
     {
         return $this->status === RelatioStatusEnum::Retrying;
     }
+
     public function isFinished(): bool
     {
         return $this->status->isFinished();
+    }
+    public function switchTo(ConverterOutputTypesEnum $outputType): void
+    {
+        $this->outputType = $outputType;
     }
 }

@@ -30,4 +30,11 @@ interface ExporterInterface
      * @return mixed
      */
     public function processFile(ExporterJob $job, ?array $parameters = [], ?array $previousFiles = []): ExporterJob;
+
+    /**
+     * @param string $file The file to be exported
+     * @param string $ownerId The ID process owner of the file
+     * @return ExporterJob
+     */
+    public function getExporterJob(string $file, string $ownerId): ExporterJob;
 }
