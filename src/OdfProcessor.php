@@ -155,7 +155,7 @@ class OdfProcessor
         return $this;
     }
 
-    private function generateId(string $prefix = 'tplJob_'): string
+    public static function generateId(string $prefix = 'tplJob_'): string
     {
         return $prefix . bin2hex(random_bytes(8));
     }
@@ -333,7 +333,7 @@ class OdfProcessor
     public function loadFile(): self
     {
         $this->validateStateForLoading();
-        $this->processId = $this->generateId();
+        $this->processId = self::generateId();
         $this->startedAt = microtime(true);
         $odfFile = $this->workingDir . DIRECTORY_SEPARATOR . basename($this->filePath);
 
@@ -412,7 +412,7 @@ class OdfProcessor
                 }
             }
             $job = new ExporterJob(
-                exportId: $this->generateId('export_'),
+                exportId: self::generateId('export_'),
                 exporterName: $exporter->exporterName,
                 jobId: $this->processId,
                 action: $exporter->action,

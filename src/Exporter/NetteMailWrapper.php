@@ -17,11 +17,6 @@ class NetteMailWrapper implements MailSenderInterface
 
     /**
      * @param Mailer $transport
-     * @param string $sender
-     * @param array $recipients
-     * @param string $subject
-     * @param string|null $bodyText
-     * @param string|null $bodyHtml
      */
     public function __construct(Mailer $transport)
     {

@@ -18,11 +18,6 @@ class SymfonyMailerWrapper implements MailSenderInterface
 
     /**
      * @param string $dsn
-     * @param string $sender
-     * @param array $recipients
-     * @param string $subject
-     * @param string|null $bodyText
-     * @param string|null $bodyHtml
      */
     public function __construct(string $dsn)
     {

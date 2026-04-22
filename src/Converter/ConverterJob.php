@@ -1,21 +1,20 @@
 <?php
 
-namespace Tabula17\Satelles\Odf\Exporter;
+namespace Tabula17\Satelles\Odf\Converter;
 
 use DateTimeImmutable;
-use Tabula17\Satelles\Odf\Converter\ConverterJob;
 use Tabula17\Satelles\Odf\Exception\RuntimeException;
-use Tabula17\Satelles\Odf\OdfProcessor;
+use Tabula17\Satelles\Odf\Exporter\ExporterActionsEnum;
 use Tabula17\Satelles\Odf\RelatioStatusEnum;
 use Tabula17\Satelles\Utilis\Config\AbstractDescriptor;
 use Throwable;
 
-class ExporterJob extends AbstractDescriptor
+class ConverterJob extends AbstractDescriptor
 {
+
+    public readonly string $convertId;
     public readonly string $exportId;
-    public readonly string $exporterName;
     public readonly string $jobId;
-    public readonly ExporterActionsEnum $action;
     public readonly string $file;
     public ?string $output = null;
     public array $data = [];
@@ -66,12 +65,10 @@ class ExporterJob extends AbstractDescriptor
             }
         }
     public ?float $durationMs = null;
-
     public function __construct(
+        string              $convertId,
         string              $exportId,
-        string              $exporterName,
         string              $jobId,
-        ExporterActionsEnum $action,
         string              $file,
         ?string             $output = null,
         ?DateTimeImmutable  $startedAt = null,
@@ -79,10 +76,9 @@ class ExporterJob extends AbstractDescriptor
         RelatioStatusEnum   $status = RelatioStatusEnum::Pending
     )
     {
+        $this->convertId = $convertId;
         $this->exportId = $exportId;
-        $this->exporterName = $exporterName;
         $this->jobId = $jobId;
-        $this->action = $action;
         $this->file = $file;
         $this->output = $output;
         $this->status = $status;
@@ -90,27 +86,26 @@ class ExporterJob extends AbstractDescriptor
         $this->startedAt = $startedAt ?? new DateTimeImmutable();
         parent::__construct();
     }
-
     public function jobResult(): array|null
     {
         if ($this->status->isFinished()) {
             $data = $this->data;
             $data['jobId'] = $this->exportId;
+            $data['conversionId'] = $this->convertId;
             $data['file'] = $this->output ?? $this->file;
-            if ($this->status->isFailed()) {
-                $data['error'] = $this->error ?? 'Unknown error when processing export job';
-            }
             $data['stats'] = [
                 'durationMs' => $this->durationMs,
                 'startedAt' => $this->startedAt->format(DATE_ATOM),
                 'finishedAt' => $this->finishedAt->format(DATE_ATOM),
+                'status' => $this->status->value,
             ];
-
+            if ($this->status->isFailed()) {
+                $data['error'] = $this->error ?? 'Unknown error when processing conversion job';
+            }
             return $data;
         }
         return null;
     }
-
     public function markQueued(): void
     {
         $this->status = RelatioStatusEnum::Queued;
@@ -125,31 +120,45 @@ class ExporterJob extends AbstractDescriptor
     {
         $this->status = RelatioStatusEnum::Completed;
     }
-
     public function markFailed(): void
     {
         $this->status = RelatioStatusEnum::Failed;
     }
-
     public function markRetrying(): void
     {
         $this->status = RelatioStatusEnum::Retrying;
         $this->attempts++;
     }
-
     public function markCancelled(): void
     {
         $this->status = RelatioStatusEnum::Cancelled;
     }
-
-    public function getConverterJob(?string $outputTo = null): ConverterJob
+    public function isQueued(): bool
     {
-        return new ConverterJob(
-            convertId: OdfProcessor::generateId('convert_'),
-            exportId: $this->exportId,
-            jobId: $this->jobId,
-            file: $this->file,
-            output: $outputTo ?? $this->output,
-        );
+        return $this->status === RelatioStatusEnum::Queued;
+    }
+    public function isRunning(): bool
+    {
+        return $this->status === RelatioStatusEnum::Running;
+    }
+    public function isCompleted(): bool
+    {
+        return $this->status === RelatioStatusEnum::Completed;
+    }
+    public function isFailed(): bool
+    {
+        return $this->status === RelatioStatusEnum::Failed;
+    }
+    public function isCancelled(): bool
+    {
+        return $this->status === RelatioStatusEnum::Cancelled;
+    }
+    public function isRetrying(): bool
+    {
+        return $this->status === RelatioStatusEnum::Retrying;
+    }
+    public function isFinished(): bool
+    {
+        return $this->status->isFinished();
     }
 }

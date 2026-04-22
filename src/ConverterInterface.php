@@ -2,15 +2,18 @@
 
 namespace Tabula17\Satelles\Odf;
 
+use Tabula17\Satelles\Odf\Converter\ConverterJob;
+use Tabula17\Satelles\Odf\Exporter\ExporterJob;
+
 /**
  *
  */
 interface ConverterInterface
 {
     /**
-     * @param string $file
-     * @param string|null $outputName
-     * @return string|null
+     * @param ExporterJob $job
+     * @return ConverterJob
      */
-    public function convert(string $file, ?string $outputName = null): ?string;
+    public function convert(ConverterJob $job): ConverterJob;
+    //public function convert(string $file, ?string $outputName = null): ?string;
 }

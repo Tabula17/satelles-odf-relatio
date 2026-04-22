@@ -83,7 +83,13 @@ class ExportToFile implements ExporterInterface
             }
             if (isset($this->converter)) {
                 try {
-                    $file = $this->converter->convert($file, $filename) ?? $file;
+                    $conversionJob = $job->getConverterJob($filename);
+                    // $result
+                    $this->converter->convert($conversionJob);
+                    //$file = $this->converter->convert($file, $filename) ?? $file;
+                    if ($conversionJob->isCompleted()) {
+                        $file = $conversionJob->output;
+                    }
                 } catch (Exception $e) {
                     throw new ExporterException(sprintf(ExporterException::DEFAULT_MESSAGE, $e->getMessage()));
                 }

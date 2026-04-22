@@ -13,6 +13,7 @@ use Tabula17\Satelles\Odf\Exception\NonWritableFileException;
 use Tabula17\Satelles\Odf\Exception\RuntimeException;
 use Swoole\Coroutine\System;
 use Swoole\Coroutine;
+use Tabula17\Satelles\Odf\Exporter\ExporterJob;
 use Throwable;
 
 /**
@@ -178,14 +179,15 @@ class SofficeConverter implements ConverterInterface
     /**
      * Converts the given file to the specified format.
      *
-     * @param string $file The file to be converted
-     * @param string|null $outputName Optional desired name for the converted file
-     * @return string|null The path to the converted file
+     * @param ConverterJob $job
+     * @return ConverterJob The path to the converted file
      * @throws ConversionException
      */
     #[Override]
-    public function convert(string $file, ?string $outputName = null): ?string
+    public function convert(ConverterJob $job): ConverterJob
     {
+        $file = $job->file;
+        $outputName = $job->output;
         // Validaciones previas
         $this->validateInput($file);
 
@@ -202,13 +204,24 @@ class SofficeConverter implements ConverterInterface
 
         // Verificar si ya existe y no sobrescribir
         if (!$this->overwrite && file_exists($generatedFile)) {
-            return $generatedFile;
+            $job->output = $generatedFile;
+            $job->markCompleted();
+            return $job;
         }
 
         // Ejecutar conversión (síncrona o asíncrona según entorno)
-        return $this->isSwooleAvailable()
+        $file = $this->isSwooleAvailable()
             ? $this->convertAsync($file, $generatedFile)
             : $this->convertSync($file, $generatedFile);
+        if (file_exists($file)) {
+            $job->output = $file;
+            $job->markCompleted();
+        } else {
+            $job->output = null;
+            $job->markFailed();
+            $job->error = 'No se pudo generar el archivo';
+        }
+        return $job;
     }
 
     /**
@@ -316,10 +329,12 @@ class SofficeConverter implements ConverterInterface
      * @return int|false ID de la corrutina o false si falla
      * @throws ConversionException
      */
-    public function convertAsyncWithCoroutine(string $file, ?string $outputName, &$result): int|false
+    public function convertAsyncWithCoroutine(ConverterJob $job, &$result): int|false
     {
+        $file = $job->file;
+        $outputName = $job->output;
         if (!$this->isSwooleAvailable()) {
-            $result = $this->convert($file, $outputName);
+            $result = $this->convert($job);
             return 0; // Indica ejecución síncrona
         }
 
@@ -332,11 +347,12 @@ class SofficeConverter implements ConverterInterface
             $result = $generatedFile;
             return 0;
         }
-
         // Crear corrutina y devolver su ID
-        return Coroutine::create(function () use ($file, $generatedFile, &$result) {
+        return Coroutine::create(function () use ($file, $generatedFile, $job, &$result) {
             try {
                 $result = $this->convertAsync($file, $generatedFile);
+                $job->output = $result;
+                $job->markCompleted();
             } catch (Throwable $e) {
                 $result = $e;
             }

@@ -215,8 +215,10 @@ class PandocConverter implements ConverterInterface
      * @return string|null The path to the converted file
      * @throws ConversionException
      */
-    public function convert(string $file, ?string $outputName = null): ?string
+    public function convert(ConverterJob $job): ConverterJob
     {
+        $file = $job->file;
+        $outputName = $job->output;
         // Validaciones previas
         $this->validateInput($file);
 
@@ -233,13 +235,24 @@ class PandocConverter implements ConverterInterface
         $generatedFile = $this->outputDir . DIRECTORY_SEPARATOR . $baseOutputName;
         // Verificar si ya existe y no sobrescribir
         if (!$this->overwrite && file_exists($generatedFile)) {
-            return $generatedFile;
+            $job->output = $generatedFile;
+            $job->markCompleted();
+            return $job;
         }
 
         // Ejecutar conversión (síncrona o asíncrona según entorno)
-        return $this->isSwooleAvailable()
+        $file = $this->isSwooleAvailable()
             ? $this->convertAsync($file, $generatedFile)
             : $this->convertSync($file, $generatedFile);
+        if (file_exists($file)) {
+            $job->output = $file;
+            $job->markCompleted();
+        } else {
+            $job->output = null;
+            $job->markFailed();
+            $job->error = 'No se pudo generar el archivo';
+        }
+        return $job;
     }
 
     /**
@@ -363,10 +376,12 @@ class PandocConverter implements ConverterInterface
     /**
      * Versión asíncrona que devuelve el ID de la corrutina
      */
-    public function convertAsyncWithCoroutine(string $file, ?string $outputName, &$result): int|false
+    public function convertAsyncWithCoroutine(ConverterJob $job, &$result): int|false
     {
+        $file = $job->file;
+        $outputName = $job->output;
         if (!$this->isSwooleAvailable()) {
-            $result = $this->convert($file, $outputName);
+            $result = $this->convert($job);
             return 0; // Indica ejecución síncrona
         }
 
@@ -380,10 +395,11 @@ class PandocConverter implements ConverterInterface
             $result = $generatedFile;
             return 0;
         }
-
-        return Coroutine::create(function () use ($file, $generatedFile, &$result) {
+        return Coroutine::create(function () use ($file, $generatedFile, $job, &$result) {
             try {
                 $result = $this->convertAsync($file, $generatedFile);
+                $job->output = $result;
+                $job->markCompleted();
             } catch (Throwable $e) {
                 $result = $e;
             }
