@@ -14,7 +14,7 @@ class ConverterJob extends AbstractDescriptor
     public readonly string $convertId;
     public readonly string $exportId;
     public readonly string $jobId;
-    protected ConverterOutputTypesEnum $outputType;
+    protected(set) ConverterOutputTypesEnum $outputType;
     public int $attempts = 0;
     public readonly string $file;
     public ?string $output = null;
@@ -180,6 +180,7 @@ class ConverterJob extends AbstractDescriptor
     {
         return $this->status->isFinished();
     }
+
     public function switchTo(ConverterOutputTypesEnum $outputType): void
     {
         $this->outputType = $outputType;
