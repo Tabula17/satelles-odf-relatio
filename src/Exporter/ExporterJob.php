@@ -68,6 +68,7 @@ class ExporterJob extends AbstractDescriptor
         }
     public ?float $durationMs = null;
     protected(set) ?ConverterOutputTypesEnum $outputType = null;
+
     public function __construct(
         string              $exportId,
         string              $exporterName,
@@ -102,6 +103,7 @@ class ExporterJob extends AbstractDescriptor
             if ($this->status->isFailed()) {
                 $data['error'] = $this->error ?? 'Unknown error when processing export job';
             }
+            $data['status'] = $this->status->value;
             $data['outputType'] = $this->outputType;
             $data['stats'] = [
                 'durationMs' => $this->durationMs,
@@ -144,6 +146,7 @@ class ExporterJob extends AbstractDescriptor
     {
         $this->status = RelatioStatusEnum::Cancelled;
     }
+
     public function switchTo(ConverterOutputTypesEnum $outputType): void
     {
         $this->outputType = $outputType;
