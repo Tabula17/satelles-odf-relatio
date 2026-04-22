@@ -102,6 +102,7 @@ class ExporterJob extends AbstractDescriptor
             if ($this->status->isFailed()) {
                 $data['error'] = $this->error ?? 'Unknown error when processing export job';
             }
+            $data['outputType'] = $this->outputType;
             $data['stats'] = [
                 'durationMs' => $this->durationMs,
                 'startedAt' => $this->startedAt->format(DATE_ATOM),

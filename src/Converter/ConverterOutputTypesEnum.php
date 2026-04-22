@@ -36,5 +36,15 @@ enum ConverterOutputTypesEnum
             default => null,
         };
     }
+    public function toString(): string
+    {
+        return match ($this) {
+            self::Path => 'path',
+            self::FileContent => 'file_content',
+            self::QueueInfo => 'queue_info',
+            self::ResultInfo => 'result_info',
+            self::Unchanged => 'unchanged',
+        };
+    }
 
 }
