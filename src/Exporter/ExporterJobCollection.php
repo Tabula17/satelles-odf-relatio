@@ -29,6 +29,24 @@ class ExporterJobCollection extends TypedCollection
 
     public function getResults(): array
     {
-        return array_filter(array_map(static fn(ExporterJob $job) => $job->status->isFinished() ? $job->jobResult() : null, $this->values));
+        return array_filter(array_map(static fn(ExporterJob $job) => $job->jobResult(), $this->values));
+    }
+
+    /**
+     * Retrieves the output of the last job in the collection that meets the
+     * conditions of being finished and having a final result as its output type.
+     *
+     * @return array|null The job result as an array if a matching job is found,
+     *                    or null if no such job exists.
+     */
+    public function getOutput(): ?array
+    {
+        /** @var ExporterJob $job */
+        foreach ($this->reverse() as $job) {
+            if ($job->status->isFinished() && $job->outputType->isFinalResult()) {
+                return $job->jobResult();
+            }
+        }
+        return null;
     }
 }
