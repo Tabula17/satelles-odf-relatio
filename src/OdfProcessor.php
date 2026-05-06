@@ -279,6 +279,9 @@ class OdfProcessor
             throw new NonWritableFileException(sprintf(FileException::CANT_OVERWRITE, $baseDir));
         }
         $this->workingDir = $this->createUniqueWorkingDirectory($baseDir);
+        if (isset($this->renderer) && isset($this->renderer->functions)) {
+            $this->renderer->functions->workingDir = $this->workingDir;
+        }
     }
 
     /**
