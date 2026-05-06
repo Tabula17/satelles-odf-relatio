@@ -3,6 +3,7 @@
 namespace Tabula17\Satelles\Odf\Exception;
 
 use Exception;
+use Throwable;
 
 class RelatioException extends \Exception
 {
@@ -13,7 +14,7 @@ class RelatioException extends \Exception
      * @param int $code The error code
      * @param Exception|null $previous The previous exception
      */
-    public function __construct(string $message, int $code = 0, ?Exception $previous = null)
+    public function __construct(string $message, int $code = 0, ?Throwable $previous = null)
     {
         parent::__construct($message, $code, $previous);
     }
