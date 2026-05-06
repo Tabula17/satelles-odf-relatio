@@ -20,6 +20,7 @@ use Tabula17\Satelles\Odf\Renderer\DataRenderer;
 use Tabula17\Satelles\Odf\Template\XmlProcessor;
 use Throwable;
 use ZipArchive;
+use function bin2hex;
 
 /**
  * Class OdfProcessor
@@ -37,7 +38,7 @@ class OdfProcessor
 
     // Flag para habilitar procesamiento paralelo (solo en Swoole Server)
     private static bool $parallelProcessingEnabled = false;
-
+    private readonly OdfContainer $fileContainer;
     private bool $fileIsLoaded = false;
     private bool $fileIsCompiled = false;
     private bool $shouldCleanup = true;
@@ -73,11 +74,11 @@ class OdfProcessor
      * @throws FileException
      */
     public function __construct(
-        private readonly string        $filePath,
-        string                         $baseDir,
-        private readonly ?OdfContainer $fileContainer = null,
-        ?DataRenderer                  $renderer = null,
-        ?XmlProcessorInterface         $xmlProcessor = null
+        private readonly string $filePath,
+        string                  $baseDir,
+        ?OdfContainer           $fileContainer = null,
+        ?DataRenderer           $renderer = null,
+        ?XmlProcessorInterface  $xmlProcessor = null
     )
     {
         if (!file_exists($this->filePath)) {
@@ -91,6 +92,7 @@ class OdfProcessor
         $this->setWorkingDirectory($baseDir);
         $this->exporterResults = new ExporterJobCollection();
         $container = $fileContainer ?? new OdfContainer($this->getZipArchive());
+        $this->fileContainer = $container;
         $this->renderer = $renderer ?? new DataRenderer([], null);
         $this->xmlProcessor = $xmlProcessor ?? new XmlProcessor($this->renderer, $container);
     }
@@ -307,7 +309,7 @@ class OdfProcessor
         $backoff = 1000;
 
         while ($attempt < $maxAttempts) {
-            $suffix = \bin2hex(\random_bytes(8));
+            $suffix = bin2hex(\random_bytes(8));
             $workingDir = $baseDir . DIRECTORY_SEPARATOR . self::TEMP_PREFIX . '_' . $suffix;
 
             if (!file_exists($workingDir)) {
@@ -405,9 +407,9 @@ class OdfProcessor
             if (!file_exists($file)) {
                 throw new FileNotFoundException(sprintf(FileNotFoundException::FILE_NOT_FOUND, $file));
             }
-            $previousFiles =[];
+            $previousFiles = [];
             foreach ($this->exporterResults as $exporterResult) {
-                if($exporterResult->output !== null && !in_array($exporterResult->output, $previousFiles)){
+                if ($exporterResult->output !== null && !in_array($exporterResult->output, $previousFiles)) {
                     $previousFiles[] = $exporterResult->file;
                 }
             }
