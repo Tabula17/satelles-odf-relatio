@@ -79,19 +79,13 @@ class ConverterJob extends AbstractJob
         ?DateTimeImmutable       $startedAt = new DateTimeImmutable(),
         public ?string           $error = null,
         RelatioStatusEnum        $status = RelatioStatusEnum::Pending,
-        public int               $maxAttempts = 3,
-        public ?int              $priority = null
+        public readonly int      $maxAttempts = 3,
+        public readonly int      $priority = 0,
     )
     {
-        //$this->convertId = $convertId;
-        // $this->exportId = $exportId;
         $this->jobId = $jobId;
         $this->outputType = $outputType;
-        //$this->file = $file;
-        //$this->options = $options;
-        //$this->output = $output;
         $this->status = $status;
-        //$this->error = $error;
         $this->startedAt = $startedAt;
         parent::__construct();
     }

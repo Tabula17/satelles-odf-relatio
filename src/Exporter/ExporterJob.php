@@ -75,8 +75,8 @@ class ExporterJob extends AbstractJob
         ?DateTimeImmutable                  $startedAt = null,
         public ?string                      $error = null,
         RelatioStatusEnum                   $status = RelatioStatusEnum::Pending,
-        public int                          $maxAttempts = 3,
-        public ?int                         $priority = null
+        public readonly int                 $maxAttempts = 3,
+        public readonly int                 $priority = 0,
     )
     {
         $this->jobId = $jobId;
