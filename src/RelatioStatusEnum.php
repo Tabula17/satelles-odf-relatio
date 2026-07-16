@@ -20,6 +20,14 @@ enum RelatioStatusEnum: string
         };
     }
 
+    public function canRetry(): bool
+    {
+        return match ($this) {
+            self::Failed, self::Queued, self::Pending => true,
+            default => false
+        };
+    }
+
     public function isRunning(): bool
     {
         return match ($this) {
@@ -35,6 +43,7 @@ enum RelatioStatusEnum: string
             default => false
         };
     }
+
     public function isQueued(): bool
     {
         return match ($this) {
@@ -42,6 +51,7 @@ enum RelatioStatusEnum: string
             default => false
         };
     }
+
     public function isCancelled(): bool
     {
         return match ($this) {
@@ -49,6 +59,7 @@ enum RelatioStatusEnum: string
             default => false
         };
     }
+
     public function isFailed(): bool
     {
         return match ($this) {
@@ -56,6 +67,7 @@ enum RelatioStatusEnum: string
             default => false
         };
     }
+
     public function isCompleted(): bool
     {
         return match ($this) {

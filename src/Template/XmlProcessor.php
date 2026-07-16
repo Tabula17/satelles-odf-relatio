@@ -4,7 +4,7 @@ namespace Tabula17\Satelles\Odf\Template;
 
 use Override;
 use Tabula17\Satelles\Odf\DataRendererInterface;
-use Tabula17\Satelles\Odf\Exception\RuntimeException;
+use Tabula17\Satelles\Odf\Exception\RelatioRuntimeException;
 use Tabula17\Satelles\Odf\Exception\StrictValueConstraintException;
 use Tabula17\Satelles\Odf\OdfContainerInterface;
 use Tabula17\Satelles\Odf\Renderer\DataRenderer;
@@ -175,7 +175,8 @@ class XmlProcessor implements XmlProcessorInterface
         $scriptParts = explode('#', $node, 2);
         if (count($scriptParts) === 2) {
             $loopNodeQuery = preg_replace(array_keys(self::XPATH_REPLACEMENTS), array_values(self::XPATH_REPLACEMENTS), $scriptParts[0]);
-            $loopDataMembers = explode('as', strtolower($scriptParts[1]));
+            $normalizedString = str_ireplace(' as ', '|||', $scriptParts[1]);
+            $loopDataMembers = explode('|||', $normalizedString);
             $loopMember = trim($loopDataMembers[0]);
             $loopAlias = trim($loopDataMembers[1]);
             if (isset($data[$loopMember]) && is_array($data[$loopMember])) {
@@ -222,7 +223,7 @@ class XmlProcessor implements XmlProcessorInterface
      * @param array $values An associative array of values used to update the media nodes.
      * @param string $searchTpl The search template defining the target media nodes to process.
      * @return void
-     * @throws StrictValueConstraintException|RuntimeException
+     * @throws StrictValueConstraintException|RelatioRuntimeException
      */
     private function processMedia(XmlPart $node, array $values, string $searchTpl): void
     {
@@ -377,6 +378,7 @@ class XmlProcessor implements XmlProcessorInterface
         // Compound expressions
         return $this->evaluateCompoundExpression($tokens);
     }
+
     /**
      * Converts a token to boolean.
      */
@@ -388,7 +390,7 @@ class XmlProcessor implements XmlProcessorInterface
 
         if (is_string($token)) {
             $lowerValue = strtolower(trim($token, "'\""));
-            return match($lowerValue) {
+            return match ($lowerValue) {
                 'true', '1' => true,
                 'false', '0', '' => false,
                 default => true,
@@ -397,6 +399,7 @@ class XmlProcessor implements XmlProcessorInterface
 
         return (bool)$token;
     }
+
     /**
      * Evaluates a compound expression with logical operators.
      */
@@ -434,6 +437,7 @@ class XmlProcessor implements XmlProcessorInterface
 
         return false;
     }
+
     /**
      * Finds the position of a logical operator in tokens.
      */

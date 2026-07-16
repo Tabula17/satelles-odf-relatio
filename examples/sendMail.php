@@ -7,7 +7,7 @@ use Tabula17\Satelles\Odf\Converter\SofficeConverter;
 use Tabula17\Satelles\Odf\Exception\CompilationException;
 use Tabula17\Satelles\Odf\Exception\ConversionException;
 use Tabula17\Satelles\Odf\Exception\ValidationException;
-use Tabula17\Satelles\Odf\Exception\RuntimeException;
+use Tabula17\Satelles\Odf\Exception\RelatioRuntimeException;
 use Tabula17\Satelles\Odf\Exporter\ExportToMail;
 use Tabula17\Satelles\Odf\Exporter\NetteMailWrapper;
 use Tabula17\Satelles\Odf\Exporter\SymfonyMailerWrapper;
@@ -115,7 +115,7 @@ try {
         ->process($data)
         ->compile()
         ->exportTo($exporter);
-} catch (CompilationException|ValidationException|RuntimeException $e) {
+} catch (CompilationException|ValidationException|RelatioRuntimeException $e) {
 
 } finally{
     $odfLoader->cleanUpWorkingDir();

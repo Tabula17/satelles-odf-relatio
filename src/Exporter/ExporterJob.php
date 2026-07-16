@@ -2,32 +2,27 @@
 
 namespace Tabula17\Satelles\Odf\Exporter;
 
+use DateInterval;
 use DateTimeImmutable;
 use Tabula17\Satelles\Odf\Converter\ConverterJob;
 use Tabula17\Satelles\Odf\Converter\ConverterOutputTypesEnum;
-use Tabula17\Satelles\Odf\Exception\RuntimeException;
+use Tabula17\Satelles\Odf\Exception\RelatioRuntimeException;
 use Tabula17\Satelles\Odf\OdfProcessor;
 use Tabula17\Satelles\Odf\RelatioStatusEnum;
-use Tabula17\Satelles\Utilis\Config\AbstractDescriptor;
+use Tabula17\Satelles\Utilis\Job\AbstractJob;
 use Throwable;
 
-class ExporterJob extends AbstractDescriptor
+class ExporterJob extends AbstractJob
 {
-    public readonly string $exportId;
-    public readonly string $exporterName;
-    public readonly string $jobId;
-    public readonly ExporterActionsEnum $action;
-    public readonly string $file;
-    public ?string $output = null;
+    //public readonly string $jobId;
     public array $data = [];
-    public ?string $error = null;
     public RelatioStatusEnum $status = RelatioStatusEnum::Pending {
         /**
-         * @throws RuntimeException
+         * @throws RelatioRuntimeException
          */
         set {
             if ($this->status->isFinished()) {
-                throw new RuntimeException('Cannot change status of finished job');
+                throw new RelatioRuntimeException('Cannot change status of finished job');
             }
             $this->status = $value;
             if ($value->isFinished()) {
@@ -62,33 +57,30 @@ class ExporterJob extends AbstractDescriptor
                     $this->finishedAt = $value;
                 }
                 if ($value) {
-                    $this->durationMs = $this->startedAt->diff($value)->f * 1000;
+                    $this->durationMs = self::dateIntervalToMs($this->startedAt->diff($value));
                 }
             }
         }
     public ?float $durationMs = null;
     protected(set) ?ConverterOutputTypesEnum $outputType = null;
+    private int $attempts = 0;
 
     public function __construct(
-        string              $exportId,
-        string              $exporterName,
-        string              $jobId,
-        ExporterActionsEnum $action,
-        string              $file,
-        ?string             $output = null,
-        ?DateTimeImmutable  $startedAt = null,
-        ?string             $error = null,
-        RelatioStatusEnum   $status = RelatioStatusEnum::Pending
+        public readonly string              $exportId,
+        public readonly string              $exporterName,
+        string                              $jobId,
+        public readonly ExporterActionsEnum $action,
+        public readonly string              $file,
+        public ?string                      $output = null,
+        ?DateTimeImmutable                  $startedAt = null,
+        public ?string                      $error = null,
+        RelatioStatusEnum                   $status = RelatioStatusEnum::Pending,
+        public int                          $maxAttempts = 3,
+        public ?int                         $priority = null
     )
     {
-        $this->exportId = $exportId;
-        $this->exporterName = $exporterName;
         $this->jobId = $jobId;
-        $this->action = $action;
-        $this->file = $file;
-        $this->output = $output;
         $this->status = $status;
-        $this->error = $error;
         $this->startedAt = $startedAt ?? new DateTimeImmutable();
         $this->outputType = ConverterOutputTypesEnum::Unchanged;
         parent::__construct();
@@ -162,5 +154,55 @@ class ExporterJob extends AbstractDescriptor
             file: $this->file,
             output: $outputTo ?? $this->output,
         );
+    }
+
+    private static function dateIntervalToMs(DateInterval $interval): int
+    {
+        $reference = new DateTimeImmutable('@0'); // Epoch base time
+        $endTime = $reference->add($interval);
+
+        // Extract total seconds difference and convert to milliseconds
+        $seconds = $endTime->getTimestamp() - $reference->getTimestamp();
+        $milliseconds = $seconds * 1000;
+
+        // Add fractional microsecond differences converted to milliseconds
+        $milliseconds += (int)($interval->f * 1000);
+
+        return $milliseconds;
+    }
+
+    public function cancel(): void
+    {
+        $this->markCancelled();
+    }
+
+    public function canRetry(): bool
+    {
+        return $this->status->canRetry() && $this->attempts < $this->maxAttempts;
+    }
+
+    public function withPriority(int $priority): static
+    {
+        return clone($this, [
+            "priority" => $priority
+        ]);
+    }
+
+    public function withMaxAttempts(int $maxAttempts): static
+    {
+        return clone($this, [
+            "maxAttempts" => $maxAttempts
+        ]);
+
+    }
+
+    public function getStatus(): mixed
+    {
+        return $this->status;
+    }
+
+    public function validate(): void
+    {
+        // TODO: Implement validate() method.
     }
 }

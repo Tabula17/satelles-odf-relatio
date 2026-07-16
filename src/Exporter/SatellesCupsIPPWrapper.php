@@ -2,7 +2,7 @@
 
 namespace Tabula17\Satelles\Odf\Exporter;
 
-use Tabula17\Satelles\Odf\Exception\RuntimeException;
+use Tabula17\Satelles\Odf\Exception\RelatioRuntimeException;
 use Tabula17\Satelles\Odf\Exporter\PrintSenderInterface;
 use Tabula17\Satelles\Utilis\Print\CupsClient;
 
@@ -29,7 +29,7 @@ class SatellesCupsIPPWrapper implements PrintSenderInterface
     public function print(string $file): array
     {
         if (!file_exists($file)) {
-            throw new RuntimeException("File not found: $file");
+            throw new RelatioRuntimeException("File not found: $file");
         }
         try {
             // Send the file to the printer
@@ -38,7 +38,7 @@ class SatellesCupsIPPWrapper implements PrintSenderInterface
                 'document-format' => 'odt'
             ]);
         } catch (\Exception $e) {
-            throw new RuntimeException("Failed to print file: " . $e->getMessage());
+            throw new RelatioRuntimeException("Failed to print file: " . $e->getMessage());
         }
     }
 }

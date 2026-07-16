@@ -10,7 +10,7 @@ use Tabula17\Satelles\Odf\Exception\CompilationException;
 use Tabula17\Satelles\Odf\Exception\FileException;
 use Tabula17\Satelles\Odf\Exception\FileNotFoundException;
 use Tabula17\Satelles\Odf\Exception\NonWritableFileException;
-use Tabula17\Satelles\Odf\Exception\RuntimeException;
+use Tabula17\Satelles\Odf\Exception\RelatioRuntimeException;
 use Tabula17\Satelles\Odf\Exception\StrictValueConstraintException;
 use Tabula17\Satelles\Odf\Exception\ValidationException;
 use Tabula17\Satelles\Odf\Exporter\ExporterJobCollection;
@@ -356,8 +356,8 @@ class OdfProcessor
             try {
                 $this->fileContainer->loadFile($odfFile);
             } catch (Throwable $e) {
-                throw new RuntimeException(
-                    sprintf(RuntimeException::FAILED_TO_LOAD, $odfFile) . ': ' . $e->getMessage(),
+                throw new RelatioRuntimeException(
+                    sprintf(RelatioRuntimeException::FAILED_TO_LOAD, $odfFile) . ': ' . $e->getMessage(),
                     0,
                     $e
                 );
@@ -367,8 +367,8 @@ class OdfProcessor
             return $this;
 
         } catch (Throwable $e) {
-            throw new RuntimeException(
-                sprintf(RuntimeException::ACTION_ERROR, 'opening', $odfFile) . ': ' . $e->getMessage(),
+            throw new RelatioRuntimeException(
+                sprintf(RelatioRuntimeException::ACTION_ERROR, 'opening', $odfFile) . ': ' . $e->getMessage(),
                 0,
                 $e
             );

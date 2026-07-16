@@ -8,7 +8,7 @@ use Tabula17\Satelles\Odf\Exception\ConversionException;
 use Tabula17\Satelles\Odf\Exception\FileException;
 use Tabula17\Satelles\Odf\Exception\FileNotFoundException;
 use Tabula17\Satelles\Odf\Exception\NonWritableFileException;
-use Tabula17\Satelles\Odf\Exception\RuntimeException;
+use Tabula17\Satelles\Odf\Exception\RelatioRuntimeException;
 use Swoole\Coroutine\System;
 use Swoole\Coroutine;
 use Throwable;
@@ -321,7 +321,7 @@ class PandocConverter implements ConverterInterface
                 sprintf(
                     ConversionException::DEFAULT_MESSAGE,
                     sprintf(
-                        RuntimeException::ACTION_ERROR_WITH_OUTPUT,
+                        RelatioRuntimeException::ACTION_ERROR_WITH_OUTPUT,
                         'ejecutando',
                         $command,
                         implode("\n", $output)
@@ -354,7 +354,7 @@ class PandocConverter implements ConverterInterface
                     sprintf(
                         ConversionException::DEFAULT_MESSAGE,
                         sprintf(
-                            RuntimeException::ACTION_ERROR_WITH_OUTPUT,
+                            RelatioRuntimeException::ACTION_ERROR_WITH_OUTPUT,
                             'ejecutando',
                             $command,
                             $result['output']

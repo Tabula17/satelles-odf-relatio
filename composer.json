@@ -45,6 +45,10 @@
     },
     {
       "type": "vcs",
+      "url": "git@github.com:Tabula17/satelles-utilis-proelio.git"
+    },
+    {
+      "type": "vcs",
       "url": "git@github.com:Tabula17/satelles-securitas.git"
     }
   ],
@@ -64,7 +68,7 @@
     "symfony/mailer": "^7.2",
     "nette/mail": "^4.0",
     "symfony/google-mailer": "^7.2",
-    "xvii/satelles-utilis-proelio": "^1.0@dev",
+    "xvii/satelles-utilis-proelio": "@dev",
     "phpunit/phpunit": ">=12.5.8",
     "swoole/ide-helper": "^6.0"
   },

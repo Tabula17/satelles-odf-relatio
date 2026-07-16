@@ -162,7 +162,7 @@ try {
     }
 
     echo var_export($odfLoader->getResult(), true);
-} catch (CompilationException|\Tabula17\Satelles\Odf\Exception\RuntimeException|ValidationException $e) {
+} catch (CompilationException|\Tabula17\Satelles\Odf\Exception\RelatioRuntimeException|ValidationException $e) {
 
 } finally {
 

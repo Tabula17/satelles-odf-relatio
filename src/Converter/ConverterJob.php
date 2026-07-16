@@ -2,32 +2,32 @@
 
 namespace Tabula17\Satelles\Odf\Converter;
 
+use DateInterval;
 use DateTimeImmutable;
-use Tabula17\Satelles\Odf\Exception\RuntimeException;
-use Tabula17\Satelles\Odf\Exporter\ExporterActionsEnum;
+use Tabula17\Satelles\Odf\Exception\RelatioRuntimeException;
 use Tabula17\Satelles\Odf\RelatioStatusEnum;
-use Tabula17\Satelles\Utilis\Config\AbstractDescriptor;
+use Tabula17\Satelles\Utilis\Job\AbstractJob;
 use Throwable;
 
-class ConverterJob extends AbstractDescriptor
+class ConverterJob extends AbstractJob
 {
-    public readonly string $convertId;
-    public readonly string $exportId;
-    public readonly string $jobId;
+    //public readonly string $convertId;
+    // public readonly string $exportId;
+    //public readonly string $jobId;
     protected(set) ConverterOutputTypesEnum $outputType;
     public int $attempts = 0;
-    public readonly string $file;
-    public ?string $output = null;
+    //public readonly string $file;
+    /*public ?string $output = null;
     public array $options = [];
     public array $data = [];
-    public ?string $error = null;
+    public ?string $error = null;*/
     public RelatioStatusEnum $status = RelatioStatusEnum::Pending {
         /**
-         * @throws RuntimeException
+         * @throws RelatioRuntimeException
          */
         set {
             if ($this->status->isFinished()) {
-                throw new RuntimeException('Cannot change status of finished job');
+                throw new RelatioRuntimeException('Cannot change status of finished job');
             }
             $this->status = $value;
             if ($value->isFinished()) {
@@ -62,35 +62,37 @@ class ConverterJob extends AbstractDescriptor
                     $this->finishedAt = $value;
                 }
                 if ($value) {
-                    $this->durationMs = $this->startedAt->diff($value)->f * 1000;
+                    $this->durationMs = self::dateIntervalToMs($this->startedAt->diff($value));
                 }
             }
         }
     public ?float $durationMs = null;
 
     public function __construct(
-        string                   $convertId,
-        string                   $exportId,
+        public readonly string   $convertId,
+        public readonly string   $exportId,
         string                   $jobId,
         ConverterOutputTypesEnum $outputType,
-        string                   $file,
-        array                    $options = [],
-        ?string                  $output = null,
-        ?DateTimeImmutable       $startedAt = null,
-        ?string                  $error = null,
-        RelatioStatusEnum        $status = RelatioStatusEnum::Pending
+        public readonly string   $file,
+        public readonly array    $options = [],
+        public ?string           $output = null,
+        ?DateTimeImmutable       $startedAt = new DateTimeImmutable(),
+        public ?string           $error = null,
+        RelatioStatusEnum        $status = RelatioStatusEnum::Pending,
+        public int               $maxAttempts = 3,
+        public ?int              $priority = null
     )
     {
-        $this->convertId = $convertId;
-        $this->exportId = $exportId;
+        //$this->convertId = $convertId;
+        // $this->exportId = $exportId;
         $this->jobId = $jobId;
         $this->outputType = $outputType;
-        $this->file = $file;
-        $this->options = $options;
-        $this->output = $output;
+        //$this->file = $file;
+        //$this->options = $options;
+        //$this->output = $output;
         $this->status = $status;
-        $this->error = $error;
-        $this->startedAt = $startedAt ?? new DateTimeImmutable();
+        //$this->error = $error;
+        $this->startedAt = $startedAt;
         parent::__construct();
     }
 
@@ -184,5 +186,55 @@ class ConverterJob extends AbstractDescriptor
     public function switchTo(ConverterOutputTypesEnum $outputType): void
     {
         $this->outputType = $outputType;
+    }
+
+    private static function dateIntervalToMs(DateInterval $interval): int
+    {
+        $reference = new DateTimeImmutable('@0'); // Epoch base time
+        $endTime = $reference->add($interval);
+
+        // Extract total seconds difference and convert to milliseconds
+        $seconds = $endTime->getTimestamp() - $reference->getTimestamp();
+        $milliseconds = $seconds * 1000;
+
+        // Add fractional microsecond differences converted to milliseconds
+        $milliseconds += (int)($interval->f * 1000);
+
+        return $milliseconds;
+    }
+
+    public function cancel(): void
+    {
+        $this->markCancelled();
+    }
+
+    public function canRetry(): bool
+    {
+        return $this->status->canRetry() && $this->attempts < $this->maxAttempts;
+    }
+
+    public function withPriority(int $priority): static
+    {
+        return clone($this, [
+            "priority" => $priority
+        ]);
+    }
+
+    public function withMaxAttempts(int $maxAttempts): static
+    {
+        return clone($this, [
+            "maxAttempts" => $maxAttempts
+        ]);
+
+    }
+
+    public function getStatus(): mixed
+    {
+        return $this->status;
+    }
+
+    public function validate(): void
+    {
+        // TODO: Implement validate() method.
     }
 }

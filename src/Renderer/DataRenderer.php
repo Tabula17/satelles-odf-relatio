@@ -213,38 +213,13 @@ class DataRenderer implements DataRendererInterface
     private function resolveValue(string $path, array $data): mixed
     {
         $parts = explode('?', $path);
-        $memberPath = $parts[0];
+        // When the engine is traversing an array in a foreach loop, a data member with dot means that the member has an 'alias' (first part). The real member is the second part.
+        $memberPath = array_last(explode('.', $parts[0]));
         $default = $parts[1] ?? null;
-        if (str_contains($memberPath, '.')) {
-            return $this->resolveNestedValue($memberPath, $data, $default);
-        }
 
-        return array_key_exists($memberPath, $this->data)
-            ? $this->data[$memberPath]
+        return array_key_exists($memberPath, $data)
+            ? $data[$memberPath]
             : $default;
-    }
-
-    /**
-     * Resolves a nested value from an array using a dot-notation path.
-     * Handles any level of nesting by traversing the data array according to the path.
-     *
-     * @param string $path The dot-separated path to the nested value (e.g., "parent.child")
-     * @param array $data The data array to traverse
-     * @param string|null $default The default value to return if the path doesn't exist
-     * @return mixed The resolved value or the default if not found
-     */
-    private function resolveNestedValue(string $path, array $data, ?string $default): mixed
-    {
-        $parts = explode('.', $path);
-
-        // Skip the first part if it's empty (which happens with paths like ".child")
-        if (empty($parts[0])) {
-            array_shift($parts);
-        }
-
-        $parts = explode('.', $path);
-        $key = $parts[1];
-        return array_key_exists($key, $data) ? $data[$key] : $default;
     }
 
     /**
