@@ -74,7 +74,7 @@ class ConverterJob extends AbstractJob
         string                   $jobId,
         ConverterOutputTypesEnum $outputType,
         public readonly string   $file,
-        public readonly array    $options = [],
+        public  array    $options = [],
         public ?string           $output = null,
         ?DateTimeImmutable       $startedAt = new DateTimeImmutable(),
         public ?string           $error = null,
