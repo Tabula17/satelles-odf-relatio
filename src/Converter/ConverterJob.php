@@ -11,16 +11,8 @@ use Throwable;
 
 class ConverterJob extends AbstractJob
 {
-    //public readonly string $convertId;
-    // public readonly string $exportId;
-    //public readonly string $jobId;
     protected(set) ConverterOutputTypesEnum $outputType;
     public int $attempts = 0;
-    //public readonly string $file;
-    /*public ?string $output = null;
-    public array $options = [];
-    public array $data = [];
-    public ?string $error = null;*/
     public RelatioStatusEnum $status = RelatioStatusEnum::Pending {
         /**
          * @throws RelatioRuntimeException
@@ -74,7 +66,7 @@ class ConverterJob extends AbstractJob
         string                   $jobId,
         ConverterOutputTypesEnum $outputType,
         public readonly string   $file,
-        public  array    $options = [],
+        public array             $options = [],
         public ?string           $output = null,
         ?DateTimeImmutable       $startedAt = new DateTimeImmutable(),
         public ?string           $error = null,

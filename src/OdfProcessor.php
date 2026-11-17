@@ -412,7 +412,7 @@ class OdfProcessor
             }
             $previousFiles = [];
             foreach ($this->exporterResults as $exporterResult) {
-                if ($exporterResult->output !== null && !in_array($exporterResult->output, $previousFiles)) {
+                if ($exporterResult->output !== null && !in_array($exporterResult->output, $previousFiles, true)) {
                     $previousFiles[] = $exporterResult->file;
                 }
             }
@@ -429,6 +429,7 @@ class OdfProcessor
 
     /**
      * Valida el estado antes de exportar
+     * @throws ValidationException
      */
     private function validateStateForExport(ExporterInterface $exporter): void
     {
@@ -446,6 +447,7 @@ class OdfProcessor
     /**
      * Compiles the processed ODF file.
      * @throws CompilationException
+     * @throws ValidationException
      */
     public function compile(): self
     {

@@ -57,6 +57,7 @@
   "require": {
     "xvii/satelles-xml-frater": "*",
     "xvii/satelles-securitas": "*",
+    "xvii/satelles-utilis-proelio": "@dev",
     "php": ">=8.5",
     "ext-zip": "*",
     "ext-fileinfo": "*",
@@ -68,7 +69,6 @@
     "symfony/mailer": "^7.2",
     "nette/mail": "^4.0",
     "symfony/google-mailer": "^7.2",
-    "xvii/satelles-utilis-proelio": "@dev",
     "phpunit/phpunit": ">=12.5.8",
     "swoole/ide-helper": "^6.0"
   },
@@ -77,7 +77,6 @@
     "endroid/qr-code": "Generate QRs to use in templates",
     "symfony/mailer": "Send generated reports by email",
     "nette/mail": "Send generated reports by email",
-    "xvii/satelles-utilis-proelio": "Send generated reports direct to printer",
     "ext-bcmath": "Barcode IMB (Intelligent Mail Barcode) needs bcmath extension",
     "ext-gd": "For JPG and PNG generators, GD or Imagick is required",
     "ext-imagick": "For JPG and PNG generators, GD or Imagick is required"
