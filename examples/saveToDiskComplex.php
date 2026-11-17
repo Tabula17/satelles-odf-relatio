@@ -11,6 +11,7 @@ use Tabula17\Satelles\Odf\File\OdfContainer;
 use Tabula17\Satelles\Odf\Functions\Advanced;
 use Tabula17\Satelles\Odf\OdfProcessor;
 use Tabula17\Satelles\Odf\Renderer\DataRenderer;
+use Tabula17\Satelles\Utilis\File\MimeTypes;
 
 $baseDir = realpath(__DIR__ . DIRECTORY_SEPARATOR . 'tmp');
 $zipHandler = new ZipArchive();
@@ -19,8 +20,10 @@ $functions = new Advanced($baseDir);
 $data = random_data_complex();
 
 $dataRenderer = new DataRenderer($data, $functions);
+$templateFormat = MimeTypes::ODT; //MimeTypes::OTT
+$pdfFormat = MimeTypes::PDF;
 
-$template = __DIR__ . DIRECTORY_SEPARATOR . 'templates/Report_Complex.odt';
+$template = __DIR__ . DIRECTORY_SEPARATOR . 'templates/Report_Complex.' . $templateFormat->extension();
 
 $odfLoader = new OdfProcessor($template, $baseDir, $fileContainer, $dataRenderer);
 
@@ -32,13 +35,13 @@ $filename = "Complex Report generated - " . date('Y-m-d H:i:s');
 $converter = null;
 try {
     if (SofficeConverter::isInstalled()) {
-        $converter = new SofficeConverter(format: 'pdf', outputDir: $odfLoader->workingDir, overwrite: false);
+        $converter = new SofficeConverter(format: $pdfFormat->extension(), outputDir: $odfLoader->workingDir, overwrite: false);
     } else if (PandocConverter::isInstalled()) {
         $converter = new PandocConverter(
-            from: 'odt', outputDir: $odfLoader->workingDir, overwrite: false
+            from: $templateFormat->extension(), outputDir: $odfLoader->workingDir, overwrite: false
         );
     } else {
-        $filename = str_replace('.pdf', '.odt', $filename);
+        $filename = str_replace(".{$pdfFormat->extension()}", ".{$templateFormat->extension()}", $filename);
         trigger_error("No se encontró el binario de 'libreoffice' y tampoco el de 'pandoc', no podemos convertir el archivo", E_USER_NOTICE);
     }
 } catch (ConversionException $e) {
@@ -46,8 +49,7 @@ try {
 }
 
 
-
-$exporter = new ExportToFile($savesDir, $filename . ".pdf"); // Convert to PDF
+$exporter = new ExportToFile($savesDir, "{$filename}.{$pdfFormat->extension()}"); // Convert to PDF
 //$exporter = new ExportToFile($savesDir, $filename. ".odt"); // Without conversion
 $exporter->converter = $converter; // Set the converter to the exporter
 

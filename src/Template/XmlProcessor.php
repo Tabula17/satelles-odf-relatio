@@ -233,7 +233,7 @@ class XmlProcessor implements XmlProcessorInterface
         $searchPattern = "descendant::draw:frame[$attr=\"$searchTpl\"]";
         $svgNodes = $node->xpath($searchPattern);
         $variableSelector = $isSvg ? 'svg:desc' : 'svg:title';
-        $imageSelector = $isSvg ? 'draw:image[@draw:mime-type="image/svg+xml"]' : 'draw:image';
+        $imageSelector = $isSvg ? 'draw:image[@draw:mime-type="image/svg+xml" or contains(@xlink:href, ".svg") or contains(@xlink:href, ".SVG")]' : 'draw:image';
         $images = [];
         $imageNames = [];
         foreach ($svgNodes as $drawNode) {
@@ -261,10 +261,14 @@ class XmlProcessor implements XmlProcessorInterface
         if ($variable) {
             $variable = $variable[0];
             $value = $this->renderer->processVariable((string)$variable, $values);
-            $imgNode = $drawNode->xpath($imageSelector);
-            if ($imgNode) {
-                $imgNode = $imgNode[0];
+            $imgNodes = $drawNode->xpath($imageSelector);
+            if (!$imgNodes) {
+                $imgNodes = $drawNode->xpath('draw:image');
             }
+            if (!$imgNodes) {
+                return;
+            }
+            $imgNode = $imgNodes[0];
             if (!file_exists($value)) {
                 return;
             }
@@ -273,8 +277,23 @@ class XmlProcessor implements XmlProcessorInterface
             $this->fileContainer->registerFileInManifest($fileName, $mime);
 
             $imgNode->setAttribute('xlink:href', $this->fileContainer->getPicturesFolder() . $fileName);
+            if ($mime) {
+                $imgNode->setAttribute('draw:mime-type', $mime);
+            }
             $images[] = $value;
             $imageNames[] = $fileName;
+
+            $targetDom = dom_import_simplexml($imgNode);
+            $frameDom = dom_import_simplexml($drawNode);
+            $imagesToDelete = [];
+            foreach ($frameDom->getElementsByTagName('image') as $img) {
+                if ($img !== $targetDom) {
+                    $imagesToDelete[] = $img;
+                }
+            }
+            foreach ($imagesToDelete as $img) {
+                $img->parentNode?->removeChild($img);
+            }
         }
     }
 

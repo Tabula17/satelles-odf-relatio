@@ -10,6 +10,7 @@ use Tabula17\Satelles\Odf\File\OdfContainer;
 use Tabula17\Satelles\Odf\Functions\Advanced;
 use Tabula17\Satelles\Odf\OdfProcessor;
 use Tabula17\Satelles\Odf\Renderer\DataRenderer;
+use Tabula17\Satelles\Utilis\File\MimeTypes;
 
 
 $baseDir = realpath(__DIR__ . DIRECTORY_SEPARATOR . 'tmp');
@@ -19,8 +20,9 @@ $functions = new Advanced($baseDir);
 $data = random_data(realpath(__DIR__ . DIRECTORY_SEPARATOR . 'media'));
 
 $dataRenderer = new DataRenderer($data, $functions);
+$templateFormat = MimeTypes::ODT; //MimeTypes::OTT
 
-$template = __DIR__ . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'Report.odt';
+$template = __DIR__ . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'Report.' . $templateFormat->extension();
 
 $odfLoader = new OdfProcessor($template, $baseDir, $fileContainer, $dataRenderer);
 
@@ -28,16 +30,16 @@ $functions->workingDir = $odfLoader->workingDir;
 
 $savesDir = realpath(__DIR__ . DIRECTORY_SEPARATOR . 'saves');
 
-$filename = "Report generated - " . date('Y-m-d H:i:s') . ".pdf";
+$filename = "Report generated - " . date('Y-m-d H:i:s') . '.' . MimeTypes::PDF->extension();
 
-echo $filename. PHP_EOL;
+echo $filename . PHP_EOL;
 $converter = null;
 try {
     if (SofficeConverter::isInstalled()) {
-        echo "Soffice is installed". PHP_EOL;
+        echo "Soffice is installed" . PHP_EOL;
         $converter = new SofficeConverter(format: 'pdf', outputDir: $odfLoader->workingDir, overwrite: false);
     } else if (PandocConverter::isInstalled()) {
-        echo "Pandoc is installed". PHP_EOL;
+        echo "Pandoc is installed" . PHP_EOL;
         $converter = new PandocConverter(
             from: 'odt', outputDir: $odfLoader->workingDir, overwrite: false
         );
