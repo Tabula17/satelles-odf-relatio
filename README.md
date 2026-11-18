@@ -21,6 +21,7 @@
   - Guardar a disco
   - Enviar por correo (Symfony Mailer/Nette)
   - Imprimir (CUPS)
+- Compatible con Swoole y procesamiento concurrente mediante corrutinas
 
 ## Requisitos
 
@@ -79,11 +80,9 @@ Si se proporciona un procesador XML, se utilizan su contenedor y su renderer, sa
 El método `exportTo` puede ser utilizado para exportar a diferentes formatos, como ODF nativo o PDF, dependiendo de la implementación del exportador.
 Hasta ese momento, el documento ODF generado se encuentra en el directorio de trabajo temporal especificado.
 Este método se puede encadenar y volver a ejecutar con otros exportadores para realizar operaciones adicionales, como enviar por correo o imprimir.
-La clase `ExportToFile` utilizada en los ejemplos utiliza el método `saveToDisk` para guardar el archivo generado en el disco. 
-Los "exportadores" pueden incluir una instancia de una clase que implemente  `ConverterInterface` para la conversión del formato final. 
-En este caso `ExportToFile` usa `ConvertToPdf` para convertir el archivo ODF a PDF, si es que encuentra instalado LibreOffice en el sistema. 
-Esta clase se encarga de ejecutar el comando `soffice` para realizar la conversión, por lo cual no es recomendada para entornos de alto rendimiento o producción, ya que puede ser lenta y bloquear el proceso.
-Para estos casos se recomienda utilizar un servidor Unoserver, que permite realizar la conversión de manera asíncrona y con mejor rendimiento (ver [`🪐 orbitalis-odf-exemplar`](https://github.com/Tabula17/orbitalis-odf-exemplar).) 
+La clase `ExportToFile` utilizada en los ejemplos guarda el archivo generado en el disco. 
+Los "exportadores" pueden incluir una instancia de una clase que implemente `ConverterInterface` para la conversión del formato final (por ejemplo, `SofficeConverter` para convertir el archivo ODF a PDF si encuentra instalado LibreOffice en el sistema).
+`SofficeConverter` ejecuta el comando `soffice` localmente. Para escenarios de alto rendimiento y producción asíncrona donde no se desea bloquear el proceso, se recomienda combinar la exportación con la librería [`satelles-odf-adiutor`](https://github.com/Tabula17/satelles-odf-adiutor), que realiza conversiones de forma asincrónica mediante Swoole y Unoserver.
 Al finalizar, se limpia el directorio de trabajo temporal con `cleanUpWorkingDir`.
 
 ## Sintaxis de Plantillas
@@ -212,10 +211,25 @@ El directorio `examples/` contiene ejemplos completos:
 
 Puede ver dentro de `examples/templates/` las plantillas utilizadas en los ejemplos, y dentro de `examples/media/` los datos y recursos necesarios para generar los reportes.
 
-## Adaptaciones y Extensiones
+## Rendimiento y Entornos Asíncronos (Swoole)
 
-### orbitalis-odf-exemplar
-Adaptación para uso asincrónico mediante Swoole: [`🪐 orbitalis-odf-exemplar`](https://github.com/Tabula17/orbitalis-odf-exemplar).
+`OdfProcessor` está diseñado y optimizado para entornos de alto rendimiento como **Swoole** (no utiliza estado global y cuenta con carga *lazy* y caché de partes XML).
+
+### Procesamiento Paralelo con Corrutinas
+
+Dentro de un servidor Swoole o en un contexto donde ya existan corrutinas activas, es posible habilitar el procesamiento paralelo invocando:
+
+```php
+use Tabula17\Satelles\Odf\OdfProcessor;
+
+// Habilita el procesamiento concurrente de archivos y exportaciones mediante corrutinas
+OdfProcessor::enableParallelProcessing(true);
+```
+
+### Conversión Asíncrona a PDF
+
+Para la conversión de documentos ODF a PDF u otros formatos sin bloquear el bucle de eventos (*event loop*), se recomienda combinar esta librería con:
+- [`🛰️ satelles-odf-adiutor`](https://github.com/Tabula17/satelles-odf-adiutor): Conversor asincrónico y de alto rendimiento para documentos ODF que utiliza Swoole y Unoserver.
 
 
 ## Licencia
