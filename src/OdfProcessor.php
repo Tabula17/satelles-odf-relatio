@@ -19,7 +19,6 @@ use Tabula17\Satelles\Odf\File\OdfContainer;
 use Tabula17\Satelles\Odf\Renderer\DataRenderer;
 use Tabula17\Satelles\Odf\Template\XmlProcessor;
 use Throwable;
-use ZipArchive;
 use function bin2hex;
 
 /**
@@ -31,10 +30,6 @@ class OdfProcessor
 {
     private const string TEMP_PREFIX = 'j17';
     private const int DIRECTORY_PERMISSIONS = 0o755;
-
-    // Pool estático de ZipArchive para reutilización
-    private static array $zipArchivePool = [];
-    private static int $maxPoolSize = 10;
 
     // Flag para habilitar procesamiento paralelo (solo en Swoole Server)
     private static bool $parallelProcessingEnabled = false;
@@ -90,7 +85,7 @@ class OdfProcessor
         }
 
         $this->exporterResults = new ExporterJobCollection();
-        $this->fileContainer = $fileContainer ?? $xmlProcessor?->fileContainer ?? new OdfContainer($this->getZipArchive());
+        $this->fileContainer = $fileContainer ?? $xmlProcessor?->fileContainer ?? new OdfContainer();
         $this->renderer = $renderer ?? $xmlProcessor?->renderer ?? new DataRenderer([], null);
         $this->xmlProcessor = $xmlProcessor ?? new XmlProcessor($this->renderer, $this->fileContainer);
         $this->xmlProcessor->renderer = $this->renderer;
@@ -105,29 +100,6 @@ class OdfProcessor
     {
         if ($this->shouldCleanup && isset($this->workingDir)) {
             $this->silentCleanup();
-        }
-    }
-
-    /**
-     * Obtiene un ZipArchive del pool
-     */
-    private function getZipArchive(): ZipArchive
-    {
-        // Solo usar pool en entornos Swoole Server (no en CLI)
-        if (self::$parallelProcessingEnabled && !empty(self::$zipArchivePool)) {
-            return array_pop(self::$zipArchivePool);
-        }
-
-        return new ZipArchive();
-    }
-
-    /**
-     * Devuelve un ZipArchive al pool
-     */
-    private function returnZipArchive(ZipArchive $zip): void
-    {
-        if (self::$parallelProcessingEnabled && count(self::$zipArchivePool) < self::$maxPoolSize) {
-            self::$zipArchivePool[] = $zip;
         }
     }
 

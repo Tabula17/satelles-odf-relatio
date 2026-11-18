@@ -148,4 +148,10 @@ class OdfContainerTest extends TestCase
     {
         $this->assertEquals('Pictures/', $this->container->getPicturesFolder());
     }
+
+    public function testConstructorWithDefaultZipHandler(): void
+    {
+        $container = new OdfContainer();
+        $this->assertEquals('Pictures/', $container->getPicturesFolder());
+    }
 }

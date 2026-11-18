@@ -57,6 +57,16 @@ class OdfProcessorTest extends TestCase
         $this->assertInstanceOf(OdfProcessor::class, $processor);
     }
 
+    public function testConstructorWithDefaultContainer()
+    {
+        $processor = new OdfProcessor(
+            $this->tempFile,
+            $this->tempDir
+        );
+
+        $this->assertInstanceOf(OdfProcessor::class, $processor);
+    }
+
     public function testConstructorThrowsExceptionWithInvalidFile()
     {
         $this->expectException(FileNotFoundException::class);

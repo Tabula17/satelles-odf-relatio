@@ -33,9 +33,9 @@ class OdfContainer implements OdfContainerInterface
     // Flag para indicar si el archivo fue modificado
     private bool $isModified = false;
 
-    public function __construct(ZipArchive $zipHandler)
+    public function __construct(?ZipArchive $zipHandler = null)
     {
-        $this->zip = $zipHandler;
+        $this->zip = $zipHandler ?? new ZipArchive();
     }
 
     public function __destruct()
