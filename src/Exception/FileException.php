@@ -20,7 +20,7 @@ class FileException extends RelatioException
     public const string CANT_CHGRP = 'Could not change group of the file "%s".';
     public const string CANT_TRUNCATE = 'Could not truncate the file "%s".';
     public const string CANT_LOAD_STREAM = 'Could not load the file stream "%s".';
-    public function __construct($message = self::DEFAULT_MESSAGE, $code = 0, \Throwable $previous = null)
+    public function __construct($message = self::DEFAULT_MESSAGE, $code = 0, ?\Throwable $previous = null)
     {
         parent::__construct($message, $code, $previous);
     }

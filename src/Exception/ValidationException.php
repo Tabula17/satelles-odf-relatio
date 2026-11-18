@@ -51,7 +51,7 @@ class ValidationException extends RelatioException
     public const string INVALID_COUNTRY_CODE = 'The country code "%s" is not valid.';
     public const string INVALID_LANGUAGE_CODE = 'The language code "%s" is not valid.';
     public const string CONTAINS_INVALID_CHARS = '%s contains invalid characters. Only alphanumeric characters and underscores are allowed.';
-    public function __construct($message = self::DEFAULT_MESSAGE, $code = 0, \Throwable $previous = null)
+    public function __construct($message = self::DEFAULT_MESSAGE, $code = 0, ?\Throwable $previous = null)
     {
         parent::__construct($message, $code, $previous);
     }

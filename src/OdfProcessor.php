@@ -38,12 +38,12 @@ class OdfProcessor
 
     // Flag para habilitar procesamiento paralelo (solo en Swoole Server)
     private static bool $parallelProcessingEnabled = false;
-    private readonly OdfContainer $fileContainer;
+    private readonly OdfContainerInterface $fileContainer;
     private bool $fileIsLoaded = false;
     private bool $fileIsCompiled = false;
     private bool $shouldCleanup = true;
-    private DataRenderer $renderer;
-    private XmlProcessor $xmlProcessor;
+    private DataRendererInterface $renderer;
+    private XmlProcessorInterface $xmlProcessor;
     public ExporterJobCollection $exporterResults;
     public array $exporterErrors = [];
 
@@ -67,8 +67,8 @@ class OdfProcessor
     /**
      * @param string $filePath Path to the ODF file
      * @param string $baseDir Base directory for temporary files
-     * @param OdfContainer|null $fileContainer Pre-configured container
-     * @param DataRenderer|null $renderer Data renderer
+     * @param OdfContainerInterface|null $fileContainer Pre-configured container; overrides the XML processor's container
+     * @param DataRendererInterface|null $renderer Data renderer; overrides the XML processor's renderer
      * @param XmlProcessorInterface|null $xmlProcessor Custom XML processor
      * @throws FileNotFoundException
      * @throws FileException
@@ -76,8 +76,8 @@ class OdfProcessor
     public function __construct(
         private readonly string $filePath,
         string                  $baseDir,
-        ?OdfContainer           $fileContainer = null,
-        ?DataRenderer           $renderer = null,
+        ?OdfContainerInterface  $fileContainer = null,
+        ?DataRendererInterface  $renderer = null,
         ?XmlProcessorInterface  $xmlProcessor = null
     )
     {
@@ -89,12 +89,13 @@ class OdfProcessor
             throw new FileException(sprintf(FileException::CANT_READ, $this->filePath));
         }
 
-        $this->setWorkingDirectory($baseDir);
         $this->exporterResults = new ExporterJobCollection();
-        $container = $fileContainer ?? new OdfContainer($this->getZipArchive());
-        $this->fileContainer = $container;
-        $this->renderer = $renderer ?? new DataRenderer([], null);
-        $this->xmlProcessor = $xmlProcessor ?? new XmlProcessor($this->renderer, $container);
+        $this->fileContainer = $fileContainer ?? $xmlProcessor?->fileContainer ?? new OdfContainer($this->getZipArchive());
+        $this->renderer = $renderer ?? $xmlProcessor?->renderer ?? new DataRenderer([], null);
+        $this->xmlProcessor = $xmlProcessor ?? new XmlProcessor($this->renderer, $this->fileContainer);
+        $this->xmlProcessor->renderer = $this->renderer;
+        $this->xmlProcessor->fileContainer = $this->fileContainer;
+        $this->setWorkingDirectory($baseDir);
     }
 
     /**
@@ -279,7 +280,7 @@ class OdfProcessor
             throw new NonWritableFileException(sprintf(FileException::CANT_OVERWRITE, $baseDir));
         }
         $this->workingDir = $this->createUniqueWorkingDirectory($baseDir);
-        if (isset($this->renderer) && isset($this->renderer->functions)) {
+        if (isset($this->renderer, $this->renderer->functions)) {
             $this->renderer->functions->workingDir = $this->workingDir;
         }
     }

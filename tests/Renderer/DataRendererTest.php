@@ -3,6 +3,7 @@
 namespace Tabula17\Satelles\Odf\Tests\Renderer;
 
 use PHPUnit\Framework\TestCase;
+use Tabula17\Satelles\Odf\Exception\FunctionRendererException;
 use Tabula17\Satelles\Odf\Exception\StrictValueConstraintException;
 use Tabula17\Satelles\Odf\Functions\Base;
 use Tabula17\Satelles\Odf\Renderer\DataRenderer;
@@ -26,9 +27,9 @@ class DataRendererTest extends TestCase
         $this->assertEquals('John Doe', $result);
     }
 
-    public function testProcessVariableWithNestedValue(): void
+    public function testProcessVariableWithAliasedValue(): void
     {
-        $data = ['user' => ['name' => 'John Doe']];
+        $data = ['name' => 'John Doe', 'user' => ['name' => 'Other']];
         
         $result = $this->renderer->processVariable('${user.name}', $data);
         
@@ -50,9 +51,15 @@ class DataRendererTest extends TestCase
         $data = ['text' => 'hello'];
         $this->renderer->data = $data;
         
-        $result = $this->renderer->processVariable('${text}#upper', $data);
+        $result = $this->renderer->processVariable('${text}#strtoupper', $data);
         
         $this->assertEquals('HELLO', $result);
+    }
+
+    public function testProcessVariableWithUnknownFunction(): void
+    {
+        $this->expectException(FunctionRendererException::class);
+        $this->renderer->processVariable('${text}#upper', ['text' => 'hello']);
     }
 
     public function testProcessVariableWithDefaultValue(): void

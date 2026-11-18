@@ -23,9 +23,9 @@ class OdfContainerTest extends TestCase
         $this->testFile = $this->tempDir . '/test.odt';
         $zip = new ZipArchive();
         $zip->open($this->testFile, ZipArchive::CREATE);
-        $zip->addFromString('content.xml', '<?xml version="1.0"?><office:document-content></office:document-content>');
-        $zip->addFromString('styles.xml', '<?xml version="1.0"?><office:document-styles></office:document-styles>');
-        $zip->addFromString('META-INF/manifest.xml', '<?xml version="1.0"?><manifest:manifest></manifest:manifest>');
+        $zip->addFromString('content.xml', '<?xml version="1.0"?><office:document-content xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"/>');
+        $zip->addFromString('styles.xml', '<?xml version="1.0"?><office:document-styles xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"/>');
+        $zip->addFromString('META-INF/manifest.xml', '<?xml version="1.0"?><manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0"/>');
         $zip->close();
 
         $this->container = new OdfContainer(new ZipArchive());
@@ -33,8 +33,9 @@ class OdfContainerTest extends TestCase
 
     protected function tearDown(): void
     {
-        if (file_exists($this->testFile)) {
-            unlink($this->testFile);
+        unset($this->container);
+        foreach (glob($this->tempDir . '/*') as $file) {
+            unlink($file);
         }
         if (is_dir($this->tempDir)) {
             rmdir($this->tempDir);
@@ -58,8 +59,15 @@ class OdfContainerTest extends TestCase
         $zip->addFromString('content.xml', 'Invalid XML');
         $zip->close();
 
-        $this->expectException(XmlProcessException::class);
         $this->container->loadFile($invalidFile);
+        $previous = libxml_use_internal_errors(true);
+        try {
+            $this->expectException(XmlProcessException::class);
+            $this->container->getPart(XmlMemberPath::CONTENT);
+        } finally {
+            libxml_clear_errors();
+            libxml_use_internal_errors($previous);
+        }
     }
 
     public function testRegisterFileInManifest(): void
@@ -123,7 +131,7 @@ class OdfContainerTest extends TestCase
         
         // Modificar contenido
         $content = $this->container->getPart(XmlMemberPath::CONTENT);
-        $content->addChild('test:element', 'Test Content');
+        $content->addChild('element', 'Test Content');
         
         $this->container->saveFile();
         

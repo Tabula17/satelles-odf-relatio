@@ -74,6 +74,8 @@ $processor->loadFile()
     ->cleanUpWorkingDir();
 ```
 El método `process` aplica los datos a la plantilla, `compile` genera el documento ODF.
+`OdfProcessor` admite implementaciones de `OdfContainerInterface`, `DataRendererInterface` y `XmlProcessorInterface`.
+Si se proporciona un procesador XML, se utilizan su contenedor y su renderer, salvo que se pasen explícitamente al constructor; en ese caso, los argumentos explícitos prevalecen y se asignan al procesador XML. El renderer compartido recibe el directorio de trabajo y los datos del procesamiento.
 El método `exportTo` puede ser utilizado para exportar a diferentes formatos, como ODF nativo o PDF, dependiendo de la implementación del exportador.
 Hasta ese momento, el documento ODF generado se encuentra en el directorio de trabajo temporal especificado.
 Este método se puede encadenar y volver a ejecutar con otros exportadores para realizar operaciones adicionales, como enviar por correo o imprimir.
