@@ -538,6 +538,15 @@ class OdfProcessor
         return $this->fileIsCompiled;
     }
 
+    /**
+     * File is only available after `OdfProcessor::compile()` and before executing `OdfProcessor::cleanUpWorkingDir()`
+     * @return string
+     */
+    public function getCompiledFilePath(): string
+    {
+        return $this->workingDir . DIRECTORY_SEPARATOR . basename($this->filePath);
+    }
+
     public function getResult(): array
     {
         if (!$this->fileIsCompiled) {
