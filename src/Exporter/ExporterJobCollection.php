@@ -21,7 +21,11 @@ class ExporterJobCollection extends TypedCollection
     {
         return array_filter(array_unique(array_merge(array_values($this->collect('file')), array_values($this->collect('output')))), static fn($value) => file_exists($value));
     }
-
+    public function getLastFile():string
+    {
+        $files = $this->getFiles();
+        return end($files);
+    }
     public function collect(string $key): array
     {
         return array_filter(array_map(static fn(ExporterJob $job) => $job->$key, $this->values));
