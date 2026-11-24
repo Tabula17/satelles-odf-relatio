@@ -18,6 +18,7 @@ use Tabula17\Satelles\Odf\Exporter\ExporterJob;
 use Tabula17\Satelles\Odf\File\OdfContainer;
 use Tabula17\Satelles\Odf\Renderer\DataRenderer;
 use Tabula17\Satelles\Odf\Template\XmlProcessor;
+use Tabula17\Satelles\Xml\XmlPart;
 use Throwable;
 use function bin2hex;
 
@@ -346,6 +347,39 @@ class OdfProcessor
                 $e
             );
         }
+    }
+
+    /**
+     * Initializes a job from XML parts cloned from a cached template.
+     *
+     * The original ODF file is still copied into the job working directory so
+     * that compile() has a valid ZIP to write into, but the expensive unzip +
+     * XML parsing of content.xml/styles.xml/manifest.xml is skipped.
+     *
+     * @internal Used by OdfTemplate::createProcessor().
+     * @param array<string, XmlPart> $parts
+     * @param array<string, string> $sources
+     */
+    public function useCachedParts(array $parts, array $sources): self
+    {
+        $this->validateStateForLoading();
+        $this->processId = self::generateId();
+        $this->startedAt = microtime(true);
+
+        $odfFile = $this->workingDir . DIRECTORY_SEPARATOR . basename($this->filePath);
+        if (!@copy($this->filePath, $odfFile)) {
+            throw new FileException(
+                sprintf(FileException::CANT_COPY, $this->filePath, $odfFile)
+            );
+        }
+
+        $this->fileContainer->loadFile($odfFile);
+        $this->fileContainer->setParts($parts, $sources);
+
+        $this->fileIsLoaded = true;
+        $this->fileIsCompiled = false;
+
+        return $this;
     }
 
     /**

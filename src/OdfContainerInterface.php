@@ -23,6 +23,15 @@ interface  OdfContainerInterface
     public function loadFile(string $file);
 
     /**
+     * Pre-seeds the container with already-parsed XML parts and their raw
+     * sources, avoiding unzip + parse work when reusing a cached template.
+     *
+     * @param array<string, XmlPart> $parts Keyed by XmlMemberPath::name().
+     * @param array<string, string> $sources Keyed by XmlMemberPath::name().
+     */
+    public function setParts(array $parts, array $sources = []): void;
+
+    /**
      * @param XmlMemberPath $part
      */
     public function loadPart(XmlMemberPath $part);

@@ -85,6 +85,39 @@ Los "exportadores" pueden incluir una instancia de una clase que implemente `Con
 `SofficeConverter` ejecuta el comando `soffice` localmente. Para escenarios de alto rendimiento y producción asíncrona donde no se desea bloquear el proceso, se recomienda combinar la exportación con la librería [`satelles-odf-adiutor`](https://github.com/Tabula17/satelles-odf-adiutor), que realiza conversiones de forma asincrónica mediante Swoole y Unoserver.
 Al finalizar, se limpia el directorio de trabajo temporal con `cleanUpWorkingDir`.
 
+### Múltiples reportes desde una misma plantilla
+
+Cuando se generan varios documentos a partir del mismo template, crear un `OdfProcessor` por cada set de datos implica descomprimir y parsear el ODT una y otra vez. `OdfTemplate` resuelve eso: parsea la plantilla **una sola vez** y produce trabajos independientes con copias de la estructura XML ya cacheada.
+
+```php
+use Tabula17\Satelles\Odf\OdfTemplate;
+
+$odfTemplate = new OdfTemplate('template.odt', '/tmp', $fileContainer, $renderer);
+$odfTemplate->load(); // warm-up opcional para workers de larga duración
+
+$results = $odfTemplate->processAll(
+    $dataSets,
+    static fn(int $index) => "/output/report-{$index}.odt"
+);
+```
+
+`processAll()` devuelve un array con el resultado de cada trabajo (`processId`, exporters, errores, duración, etc.). Si necesitas controlar la exportación de cada uno (por ejemplo, convertir a PDF, enviar por correo o imprimir), crea los trabajos manualmente:
+
+```php
+foreach ($dataSets as $index => $data) {
+    $job = $odfTemplate->createProcessor();
+    try {
+        $job->process($data)
+            ->compile()
+            ->exportTo(new ExportToFile('/output', "report-{$index}.odt"));
+    } finally {
+        $job->cleanUpWorkingDir();
+    }
+}
+```
+
+Cada trabajo tiene su propio directorio temporal y su propio `OdfContainer` (con copias de los nodos XML), por lo que las mutaciones de un reporte no afectan a los demás ni al template cacheado. El `DataRenderer` se comparte entre trabajos porque es stateless. Ver `examples/multipleReports.php`.
+
 ## Sintaxis de Plantillas
 
 Las plantillas pueden editarse directamente en openoffice o libreoffice.
@@ -206,6 +239,7 @@ El directorio `examples/` contiene ejemplos completos:
 - `saveToDiskComplex.php`: Procesamiento complejo con guardado a disco
 - `sendMail.php`: Envío por correo electrónico
 - `multipleActions.php`: Múltiples acciones de exportación
+- `multipleReports.php`: Múltiples reportes reutilizando un template cacheado
 - `printFile.php`: Impresión de documentos
 - `saveToDisk.php`: Guardado básico a disco
 

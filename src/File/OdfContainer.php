@@ -66,6 +66,21 @@ class OdfContainer implements OdfContainerInterface
     }
 
     /**
+     * Pre-seeds already-parsed parts (e.g. cloned from a cached template).
+     * Also populates the raw source cache so saveFile() can write the parts
+     * back into the ZIP without re-opening it.
+     */
+    public function setParts(array $parts, array $sources = []): void
+    {
+        $this->parts = $parts;
+        foreach ($sources as $name => $source) {
+            $path = XmlMemberPath::fromName($name);
+            $this->contentCache[$path] = $source;
+        }
+        $this->isModified = true;
+    }
+
+    /**
      * Loads a specific part (con cache)
      */
     public function loadPart(XmlMemberPath $part): void
