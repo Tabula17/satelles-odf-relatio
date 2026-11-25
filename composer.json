@@ -61,7 +61,8 @@
     "php": ">=8.5",
     "ext-zip": "*",
     "ext-fileinfo": "*",
-    "ext-simplexml": "*"
+    "ext-simplexml": "*",
+    "ext-libxml": "*"
   },
   "require-dev": {
     "picqer/php-barcode-generator": "^3.2",

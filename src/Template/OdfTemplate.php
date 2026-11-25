@@ -9,6 +9,7 @@ use Tabula17\Satelles\Odf\Exception\FileException;
 use Tabula17\Satelles\Odf\Exception\FileNotFoundException;
 use Tabula17\Satelles\Odf\Exception\RelatioRuntimeException;
 use Tabula17\Satelles\Odf\Exception\XmlProcessException;
+use Tabula17\Satelles\Odf\Exporter\ExportToFile;
 use Tabula17\Satelles\Odf\File\OdfContainer;
 use Tabula17\Satelles\Odf\OdfContainerInterface;
 use Tabula17\Satelles\Odf\OdfProcessor;
@@ -166,7 +167,7 @@ class OdfTemplate
             try {
                 $processor->process($data)->compile();
                 $destination = $outputPath($index, $processor);
-                $processor->exportTo(new \Tabula17\Satelles\Odf\Exporter\ExportToFile(
+                $processor->exportTo(new ExportToFile(
                     dirname($destination),
                     basename($destination)
                 ));
